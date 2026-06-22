@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brand-cream text-gray-800 font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-navy text-white px-6 py-3 rounded-lg font-semibold
+      hover:bg-blue-900 transition-all duration-200 
+      shadow-md hover:shadow-lg active:scale-[0.98];
+  }
+
+  .btn-gold {
+    @apply bg-brand-gold text-white px-6 py-3 rounded-lg font-semibold
+      hover:bg-yellow-700 transition-all duration-200 
+      shadow-md hover:shadow-lg active:scale-[0.98];
+  }
+
+  .btn-outline {
+    @apply border-2 border-brand-navy text-brand-navy px-6 py-3 rounded-lg font-semibold
+      hover:bg-brand-navy hover:text-white transition-all duration-200
+      active:scale-[0.98];
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg border border-gray-300 
+      focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 
+      outline-none transition-all duration-200 bg-white;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-bold text-brand-navy mb-2;
+  }
+
+  .section-subtitle {
+    @apply text-gray-600 text-lg mb-8;
+  }
+
+  .blurred-content {
+    @apply relative overflow-hidden;
+  }
+
+  .blurred-content::after {
+    content: '';
+    @apply absolute inset-0 backdrop-blur-md bg-white/10 z-10;
+  }
+}
+
+/* Custom animations */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-brand-cream;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-brand-gold/40 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-brand-gold/60;
+}
