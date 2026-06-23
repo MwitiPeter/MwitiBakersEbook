@@ -35,6 +35,9 @@ export function AuthProvider({ children }) {
 
     // If email verification is required, don't store token yet
     if (data.requiresVerification) {
+      if (data.devCode) {
+        sessionStorage.setItem('devCode', data.devCode);
+      }
       return data;
     }
 
@@ -49,6 +52,10 @@ export function AuthProvider({ children }) {
 
     // If verification is required, don't auto-login
     if (data.requiresVerification) {
+      // Store dev code if available (Resend not configured - show in browser)
+      if (data.devCode) {
+        sessionStorage.setItem('devCode', data.devCode);
+      }
       return data;
     }
 

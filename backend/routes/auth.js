@@ -38,11 +38,14 @@ router.post(
         // Resend verification for unverified users
         const code = existingUser.generateVerificationCode();
         await existingUser.save();
-        await sendVerificationCode(email, name, code);
+        const result = await sendVerificationCode(email, name, code);
         return res.json({
           requiresVerification: true,
-          message: 'A verification code has been sent to your email.',
+          message: result.devMode
+            ? 'Use the code below to verify your account.'
+            : 'A verification code has been sent to your email.',
           email,
+          devCode: result.devMode ? result.code : undefined,
         });
       }
 
@@ -50,13 +53,16 @@ router.post(
       const code = user.generateVerificationCode();
       await user.save();
 
-      // Send verification code (logs to console if no Resend configured)
-      await sendVerificationCode(email, name, code);
+      // Send verification code
+      const result = await sendVerificationCode(email, name, code);
 
       res.status(201).json({
         requiresVerification: true,
-        message: 'Account created! Please check your email for a verification code.',
+        message: result.devMode
+          ? 'Your account is ready! Use the code below to verify.'
+          : 'Account created! Please check your email for a verification code.',
         email,
+        devCode: result.devMode ? result.code : undefined,
       });
     } catch (error) {
       console.error('Signup error:', error);
@@ -154,9 +160,14 @@ router.post(
 
       const code = user.generateVerificationCode();
       await user.save();
-      await sendVerificationCode(email, user.name, code);
+      const result = await sendVerificationCode(email, user.name, code);
 
-      res.json({ message: 'A new verification code has been sent to your email.' });
+      res.json({
+        message: result.devMode
+          ? 'Your new verification code is shown below.'
+          : 'A new verification code has been sent to your email.',
+        devCode: result.devMode ? result.code : undefined,
+      });
     } catch (error) {
       console.error('Resend code error:', error);
       res.status(500).json({ message: 'Server error' });
@@ -191,10 +202,18 @@ router.post(
       }
 
       if (!user.isVerified) {
+        // Send a fresh verification code
+        const code = user.generateVerificationCode();
+        await user.save();
+        const result = await sendVerificationCode(email, user.name, code);
+
         return res.json({
           requiresVerification: true,
-          message: 'Please verify your email before logging in.',
+          message: result.devMode
+            ? 'Please verify your email first. Your code is shown on the next page.'
+            : 'Please verify your email before logging in. A new code has been sent.',
           email: user.email,
+          devCode: result.devMode ? result.code : undefined,
         });
       }
 

@@ -12,19 +12,23 @@ const getResend = () => {
 const sendVerificationCode = async (email, name, code) => {
   const client = getResend();
 
-  // If no Resend client is configured, log the code to console (dev mode)
+  // If no Resend client is configured, return the code to display in the browser
   if (!client) {
     console.log(`\n========================================`);
     console.log(`🔐 VERIFICATION CODE for ${email}`);
     console.log(`   Code: ${code}`);
     console.log(`   Name: ${name}`);
+    console.log(`   Expires: ${new Date(Date.now() + 30 * 60 * 1000).toLocaleTimeString()}`);
     console.log(`========================================\n`);
     return { success: true, devMode: true, code };
   }
 
   try {
+    // Use the configured FROM_EMAIL or fall back to Resend's default verified sender
+    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+
     const { data, error } = await client.emails.send({
-      from: 'Mwiti Bakers <noreply@mwitibakers.com>',
+      from: `Mwiti Bakers <${fromEmail}>`,
       to: email,
       subject: 'Verify your Mwiti Bakers account',
       html: `
@@ -58,21 +62,16 @@ const sendVerificationCode = async (email, name, code) => {
 
     if (error) {
       console.error('Resend email error:', error);
-      // Fall back to console logging
-      console.log(`\n========================================`);
-      console.log(`🔐 VERIFICATION CODE for ${email}`);
-      console.log(`   Code: ${code}`);
-      console.log(`========================================\n`);
+      // Fall back: return the code for browser display
+      console.log(`⚠️ Resend failed. Verification code for ${email}: ${code}`);
       return { success: true, devMode: true, code };
     }
 
     return { success: true };
   } catch (err) {
     console.error('Failed to send verification email:', err);
-    console.log(`\n========================================`);
-    console.log(`🔐 VERIFICATION CODE for ${email}`);
-    console.log(`   Code: ${code}`);
-    console.log(`========================================\n`);
+    // Fall back: return the code for browser display
+    console.log(`⚠️ Email send failed. Verification code for ${email}: ${code}`);
     return { success: true, devMode: true, code };
   }
 };
