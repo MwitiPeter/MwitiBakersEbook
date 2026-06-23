@@ -87,6 +87,11 @@ export default function Gallery() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div className="text-center mb-8 sm:mb-10">
+        <img
+          src="/logo.png"
+          alt="Mwiti Bakers"
+          className="h-14 sm:h-16 w-auto mx-auto mb-4 object-contain"
+        />
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-navy">Image Gallery</h1>
         <p className="text-sm sm:text-base text-gray-600 mt-2 max-w-2xl mx-auto">
           Discover premium baking photography. Unlock and download your favorites.

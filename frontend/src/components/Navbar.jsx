@@ -37,7 +37,7 @@ export default function Navbar() {
             <img
               src="/logo.png"
               alt="Mwiti Bakers"
-              className="h-10 w-auto object-contain mix-blend-multiply"
+              className="h-10 sm:h-12 w-auto object-contain hover:scale-105 transition-transform duration-200"
             />
           </Link>
 

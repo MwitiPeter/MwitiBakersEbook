@@ -71,6 +71,11 @@ export default function PaymentCallback() {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+        <img
+          src="/logo.png"
+          alt="Mwiti Bakers"
+          className="h-14 sm:h-16 w-auto mx-auto mb-6 object-contain"
+        />
         {status === 'verifying' && (
           <div>
             <div className="w-16 h-16 border-4 border-brand-gold border-t-brand-navy rounded-full animate-spin mx-auto mb-6"></div>

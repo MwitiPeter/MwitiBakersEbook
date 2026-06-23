@@ -20,6 +20,11 @@ export default function Home() {
               <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
               Premium Digital Bakery
             </div>
+            <img
+              src="/logo.png"
+              alt="Mwiti Bakers"
+              className="h-20 sm:h-24 md:h-28 w-auto mx-auto mb-6 brightness-0 invert object-contain"
+            />
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight">
               Welcome to{' '}
               <span className="text-brand-gold">Mwiti Bakers</span>
@@ -141,14 +146,14 @@ export default function Home() {
                 video training. Every piece of content is curated to help you elevate your
                 baking skills.
               </p>
-              <div className="grid grid-cols-2 gap-6 mt-8">
-                <div>
-                  <h4 className="text-3xl font-bold text-brand-navy">Our Mission</h4>
-                  <p className="text-gray-500 text-sm mt-1">To make premium baking education accessible to everyone</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
+                <div className="bg-brand-cream rounded-2xl p-5 sm:p-6">
+                  <h4 className="text-2xl sm:text-3xl font-bold text-brand-navy">Our Mission</h4>
+                  <p className="text-gray-500 text-sm mt-2 leading-relaxed">To make premium baking education accessible to everyone</p>
                 </div>
-                <div>
-                  <h4 className="text-3xl font-bold text-brand-navy">Our Vision</h4>
-                  <p className="text-gray-500 text-sm mt-1">To be Africa's leading digital bakery content platform</p>
+                <div className="bg-brand-cream rounded-2xl p-5 sm:p-6">
+                  <h4 className="text-2xl sm:text-3xl font-bold text-brand-navy">Our Vision</h4>
+                  <p className="text-gray-500 text-sm mt-2 leading-relaxed">To be Africa's leading digital bakery content platform</p>
                 </div>
               </div>
             </div>

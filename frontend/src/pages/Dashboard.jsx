@@ -107,11 +107,18 @@ export default function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Welcome */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-brand-navy">
-          Welcome back, {user?.name || 'Baker'}!
-        </h1>
-        <p className="text-gray-600 mt-1">Here's what's available for you today.</p>
+      <div className="mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+        <img
+          src="/logo.png"
+          alt="Mwiti Bakers"
+          className="h-14 sm:h-16 w-auto object-contain flex-shrink-0"
+        />
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy text-center sm:text-left">
+            Welcome back, {user?.name || 'Baker'}!
+          </h1>
+          <p className="text-gray-600 mt-1 text-center sm:text-left">Here's what's available for you today.</p>
+        </div>
       </div>
 
       {/* Section Cards */}
@@ -244,14 +251,14 @@ export default function Dashboard() {
                 <Link
                   key={payment._id}
                   to={itemLink}
-                  className="flex items-center justify-between py-3 px-3 rounded-xl border border-gray-100 hover:border-brand-gold/30 hover:bg-brand-cream/50 transition-all"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-3 rounded-xl border border-gray-100 hover:border-brand-gold/30 hover:bg-brand-cream/50 transition-all gap-2 sm:gap-0"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white ${typeInfo.color}`}>
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0 ${typeInfo.color}`}>
                       <typeInfo.icon className="text-lg" />
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-800 text-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-800 text-sm truncate">
                         {payment.metadata?.itemTitle || `${payment.itemType.replace(/([A-Z])/g, ' $1').trim()} purchased`}
                       </p>
                       <p className="text-xs text-gray-500">
@@ -259,15 +266,15 @@ export default function Dashboard() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                  <div className="flex items-center space-x-2 self-end sm:self-auto">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ${
                       payment.status === 'success' ? 'bg-green-50 text-green-700' :
                       payment.status === 'pending' ? 'bg-yellow-50 text-yellow-700' :
                       'bg-red-50 text-red-700'
                     }`}>
                       {payment.status === 'success' ? 'Completed' : payment.status}
                     </span>
-                    <HiExternalLink className="text-gray-400 text-sm" />
+                    <HiExternalLink className="text-gray-400 text-sm flex-shrink-0" />
                   </div>
                 </Link>
               );

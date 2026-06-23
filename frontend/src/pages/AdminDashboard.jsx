@@ -373,42 +373,42 @@ export default function AdminDashboard() {
           <span className="text-xs text-gray-400">{recentBuyers.length} transactions</span>
         </div>
         {recentBuyers.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="w-full text-left text-sm min-w-[500px] sm:min-w-0">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="pb-3 font-semibold text-gray-500">Customer</th>
-                  <th className="pb-3 font-semibold text-gray-500">Item</th>
-                  <th className="pb-3 font-semibold text-gray-500">Amount</th>
-                  <th className="pb-3 font-semibold text-gray-500 hidden sm:table-cell">Date</th>
-                  <th className="pb-3 font-semibold text-gray-500">Status</th>
+                  <th className="pb-3 font-semibold text-gray-500 whitespace-nowrap">Customer</th>
+                  <th className="pb-3 font-semibold text-gray-500 whitespace-nowrap">Item</th>
+                  <th className="pb-3 font-semibold text-gray-500 whitespace-nowrap">Amount</th>
+                  <th className="pb-3 font-semibold text-gray-500 whitespace-nowrap hidden sm:table-cell">Date</th>
+                  <th className="pb-3 font-semibold text-gray-500 whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {recentBuyers.map((payment) => (
                   <tr key={payment._id} className="border-b border-gray-50 hover:bg-gray-50/50">
                     <td className="py-3 pr-3">
-                      <div>
-                        <p className="font-medium text-brand-navy text-xs sm:text-sm">
+                      <div className="min-w-0">
+                        <p className="font-medium text-brand-navy text-xs sm:text-sm truncate max-w-[120px] sm:max-w-[200px]">
                           {payment.user?.name || 'Unknown'}
                         </p>
-                        <p className="text-xs text-gray-400">{payment.user?.email || ''}</p>
+                        <p className="text-xs text-gray-400 truncate max-w-[120px] sm:max-w-[200px]">{payment.user?.email || ''}</p>
                       </div>
                     </td>
                     <td className="py-3 pr-3">
                       <p className="text-xs sm:text-sm capitalize">{payment.itemType}</p>
-                      <p className="text-xs text-gray-400 truncate max-w-[100px] sm:max-w-[150px]">
+                      <p className="text-xs text-gray-400 truncate max-w-[80px] sm:max-w-[150px]">
                         {payment.metadata?.itemTitle || ''}
                       </p>
                     </td>
-                    <td className="py-3 pr-3 font-medium text-brand-navy text-xs sm:text-sm">
+                    <td className="py-3 pr-3 font-medium text-brand-navy text-xs sm:text-sm whitespace-nowrap">
                       KES {payment.amount}
                     </td>
-                    <td className="py-3 pr-3 text-xs text-gray-400 hidden sm:table-cell">
+                    <td className="py-3 pr-3 text-xs text-gray-400 hidden sm:table-cell whitespace-nowrap">
                       {new Date(payment.createdAt).toLocaleDateString()}
                     </td>
                     <td className="py-3">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ${
                         payment.status === 'success' ? 'bg-green-50 text-green-700' :
                         payment.status === 'pending' ? 'bg-yellow-50 text-yellow-700' :
                         'bg-red-50 text-red-700'
@@ -454,34 +454,38 @@ export default function AdminDashboard() {
         ) : null}
 
         {userActivity?.recentVisitors?.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="w-full text-left text-sm min-w-[500px] sm:min-w-0">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="pb-3 font-semibold text-gray-500">Name</th>
-                  <th className="pb-3 font-semibold text-gray-500">Email</th>
-                  <th className="pb-3 font-semibold text-gray-500 hidden sm:table-cell">Joined</th>
-                  <th className="pb-3 font-semibold text-gray-500">Last Login</th>
-                  <th className="pb-3 font-semibold text-gray-500">Status</th>
+                  <th className="pb-3 font-semibold text-gray-500 whitespace-nowrap">Name</th>
+                  <th className="pb-3 font-semibold text-gray-500 whitespace-nowrap">Email</th>
+                  <th className="pb-3 font-semibold text-gray-500 whitespace-nowrap hidden sm:table-cell">Joined</th>
+                  <th className="pb-3 font-semibold text-gray-500 whitespace-nowrap">Last Login</th>
+                  <th className="pb-3 font-semibold text-gray-500 whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {userActivity.recentVisitors.map((visitor) => (
                   <tr key={visitor._id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                    <td className="py-2.5 pr-3 font-medium text-brand-navy text-xs sm:text-sm">
-                      {visitor.name}
+                    <td className="py-2.5 pr-3">
+                      <p className="font-medium text-brand-navy text-xs sm:text-sm truncate max-w-[120px] sm:max-w-[200px]">{visitor.name}</p>
                     </td>
-                    <td className="py-2.5 pr-3 text-xs text-gray-500">{visitor.email}</td>
-                    <td className="py-2.5 pr-3 text-xs text-gray-400 hidden sm:table-cell">
+                    <td className="py-2.5 pr-3">
+                      <p className="text-xs text-gray-500 truncate max-w-[120px] sm:max-w-[200px]">{visitor.email}</p>
+                    </td>
+                    <td className="py-2.5 pr-3 text-xs text-gray-400 hidden sm:table-cell whitespace-nowrap">
                       {new Date(visitor.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="py-2.5 pr-3 text-xs text-gray-500">
-                      {visitor.lastLogin
-                        ? new Date(visitor.lastLogin).toLocaleDateString() + ' ' + new Date(visitor.lastLogin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                        : 'Never'}
+                    <td className="py-2.5 pr-3">
+                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                        {visitor.lastLogin
+                          ? new Date(visitor.lastLogin).toLocaleDateString() + ' ' + new Date(visitor.lastLogin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : 'Never'}
+                      </p>
                     </td>
                     <td className="py-2.5">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${
                         visitor.isVerified ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
                       }`}>
                         {visitor.isVerified ? 'Verified' : 'Pending'}
@@ -505,9 +509,16 @@ export default function AdminDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy">Admin Dashboard</h1>
-          <p className="text-sm sm:text-base text-gray-600">Manage your Mwiti Bakers platform</p>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <img
+            src="/logo.png"
+            alt="Mwiti Bakers"
+            className="h-12 sm:h-14 w-auto object-contain flex-shrink-0"
+          />
+          <div>
+            <h1 className="text-xl sm:text-3xl font-bold text-brand-navy">Admin Dashboard</h1>
+            <p className="text-xs sm:text-base text-gray-600">Manage your Mwiti Bakers platform</p>
+          </div>
         </div>
         {activeTab !== 'overview' && (
           <button

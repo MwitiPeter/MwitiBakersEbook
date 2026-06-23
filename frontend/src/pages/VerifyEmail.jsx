@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../api/axios';
-import { HiMail, HiCheckCircle } from 'react-icons/hi';
+import { HiCheckCircle } from 'react-icons/hi';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -92,9 +92,11 @@ export default function VerifyEmail() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-brand-navy/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <HiMail className="text-3xl text-brand-navy" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Mwiti Bakers"
+            className="h-16 sm:h-20 w-auto mx-auto mb-4 object-contain"
+          />
           <h1 className="text-3xl font-bold text-brand-navy mt-2">Check Your Email</h1>
           <p className="text-gray-600 mt-2">
             We sent a verification code to<br />
