@@ -104,9 +104,15 @@ router.post(
         email,
       });
     } catch (error) {
-      console.error('Signup error:', error);
-      // Show generic message to users; details are in server logs
-      res.status(500).json({ message: 'Unable to complete signup. Please try again later.' });
+      console.error('=== SIGNUP ERROR ===');
+      console.error('Name:', error.name);
+      console.error('Message:', error.message);
+      console.error('Stack:', error.stack);
+      // Show the actual error for debugging
+      res.status(500).json({
+        message: 'Unable to complete signup. Please try again later.',
+        _debug: error.message,
+      });
     }
   }
 );
