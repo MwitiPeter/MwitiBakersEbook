@@ -2,7 +2,12 @@ import axios from 'axios';
 
 // In production (Vercel), API is at the Render URL.
 // In development, Vite proxies /api to localhost:5000.
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// In production (Vercel), VITE_API_URL is the Render URL (e.g. https://api.onrender.com).
+// We append /api because all backend routes are mounted under /api.
+// In development, fall back to Vite's proxy at /api.
+// Strip trailing slash if present, then append /api
+const BASE = import.meta.env.VITE_API_URL?.replace(/\/+$/, '');
+const API_BASE = BASE ? `${BASE}/api` : '/api';
 
 const API = axios.create({
   baseURL: API_BASE,
