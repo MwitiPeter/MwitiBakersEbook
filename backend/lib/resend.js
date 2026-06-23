@@ -12,15 +12,11 @@ const getResend = () => {
 const sendVerificationCode = async (email, name, code) => {
   const client = getResend();
 
-  // If no Resend client is configured, throw a clear error
+  // If no Resend client is configured, log the code to console and flag as unsent
   if (!client) {
-    const errorMsg =
-      'Email service not configured. Please set the RESEND_API_KEY environment variable. ' +
-      'Get a free API key at https://resend.com/api-keys';
-    console.error(`\n⚠️  ${errorMsg}`);
-    console.error(`   Code was NOT sent to ${email} (code: ${code})`);
-    console.error(`   Set RESEND_API_KEY in your .env or Render env vars to enable email delivery.\n`);
-    throw new Error(errorMsg);
+    console.log(`\n📧 [DEV MODE] Verification code for ${email}: ${code}`);
+    console.log(`   Set RESEND_API_KEY in your .env or Render env vars to enable real email delivery.\n`);
+    return { sent: false, reason: 'RESEND_API_KEY not configured' };
   }
 
   try {
@@ -65,7 +61,7 @@ const sendVerificationCode = async (email, name, code) => {
       throw new Error(`Failed to send verification email: ${error.message}`);
     }
 
-    return { success: true };
+    return { sent: true };
   } catch (err) {
     console.error('Failed to send verification email:', err);
     throw new Error(

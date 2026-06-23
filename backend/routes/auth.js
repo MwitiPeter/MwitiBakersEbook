@@ -38,7 +38,30 @@ router.post(
         // Resend verification for unverified users
         const code = existingUser.generateVerificationCode();
         await existingUser.save();
-        await sendVerificationCode(email, name, code);
+        const result = await sendVerificationCode(email, name, code);
+
+        // If email service isn't configured, auto-verify
+        if (result && !result.sent) {
+          existingUser.isVerified = true;
+          existingUser.verificationCode = undefined;
+          existingUser.verificationCodeExpires = undefined;
+          await existingUser.save();
+
+          const token = generateToken(existingUser);
+          return res.json({
+            token,
+            autoVerified: true,
+            message:
+              'Account created! (Email verification not configured. You are automatically verified.)',
+            user: {
+              id: existingUser._id,
+              name: existingUser.name,
+              email: existingUser.email,
+              role: existingUser.role,
+            },
+          });
+        }
+
         return res.json({
           requiresVerification: true,
           message: 'A verification code has been sent to your email.',
@@ -51,7 +74,29 @@ router.post(
       await user.save();
 
       // Send verification code via email
-      await sendVerificationCode(email, name, code);
+      const result = await sendVerificationCode(email, name, code);
+
+      // If email service isn't configured, auto-verify the user (degraded mode)
+      if (result && !result.sent) {
+        user.isVerified = true;
+        user.verificationCode = undefined;
+        user.verificationCodeExpires = undefined;
+        await user.save();
+
+        const token = generateToken(user);
+        return res.status(201).json({
+          token,
+          autoVerified: true,
+          message:
+            'Account created! (Email verification not configured. You are automatically verified.)',
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          },
+        });
+      }
 
       res.status(201).json({
         requiresVerification: true,
@@ -155,7 +200,20 @@ router.post(
 
       const code = user.generateVerificationCode();
       await user.save();
-      await sendVerificationCode(email, user.name, code);
+      const result = await sendVerificationCode(email, user.name, code);
+
+      // If email service isn't configured, auto-verify
+      if (result && !result.sent) {
+        user.isVerified = true;
+        user.verificationCode = undefined;
+        user.verificationCodeExpires = undefined;
+        await user.save();
+
+        return res.json({
+          autoVerified: true,
+          message: 'Email automatically verified (email service not configured). You can now log in.',
+        });
+      }
 
       res.json({
         message: 'A new verification code has been sent to your email.',
@@ -197,7 +255,30 @@ router.post(
         // Send a fresh verification code
         const code = user.generateVerificationCode();
         await user.save();
-        await sendVerificationCode(email, user.name, code);
+        const result = await sendVerificationCode(email, user.name, code);
+
+        // If email service isn't configured, auto-verify and log in
+        if (result && !result.sent) {
+          user.isVerified = true;
+          user.verificationCode = undefined;
+          user.verificationCodeExpires = undefined;
+          user.lastLogin = new Date();
+          await user.save();
+
+          const token = generateToken(user);
+          return res.json({
+            token,
+            autoVerified: true,
+            message:
+              'Logged in! (Email verification not configured. You are automatically verified.)',
+            user: {
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+            },
+          });
+        }
 
         return res.json({
           requiresVerification: true,
