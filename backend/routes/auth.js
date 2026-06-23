@@ -52,7 +52,7 @@ router.post(
             token,
             autoVerified: true,
             message:
-              'Account created! (Email verification not configured. You are automatically verified.)',
+              'Account created! (Unable to send verification email. You are automatically verified.)',
             user: {
               id: existingUser._id,
               name: existingUser.name,
@@ -104,14 +104,8 @@ router.post(
         email,
       });
     } catch (error) {
-      console.error('=== SIGNUP ERROR ===');
-      console.error('Name:', error.name);
-      console.error('Message:', error.message);
-      console.error('Stack:', error.stack);
-      res.status(500).json({
-        message: 'Unable to complete signup. Please try again later.',
-        _debug: error.message,
-      });
+      console.error('Signup error:', error);
+      res.status(500).json({ message: 'Unable to complete signup. Please try again later.' });
     }
   }
 );
