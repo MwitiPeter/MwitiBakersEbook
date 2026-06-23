@@ -13,7 +13,7 @@ export default function Footer() {
               <img
                 src="/NewLogo.jpg"
                 alt="Mwiti Bakers"
-                className="h-14 w-auto object-contain"
+                className="h-14 w-auto object-contain brightness-0 invert"
               />
             </Link>
             <p className="text-gray-300 text-sm leading-relaxed">

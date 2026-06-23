@@ -152,112 +152,76 @@ export default function Dashboard() {
         <div className="mb-12">
           <h2 className="text-xl font-bold text-brand-navy mb-6">My Purchased Items</h2>
 
-          {/* Purchased Images */}
-          {purchasedItems.images.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-sm font-semibold text-blue-700 uppercase tracking-wider mb-3 flex items-center space-x-2">
-                <HiPhotograph className="text-lg" />
-                <span>Images ({purchasedItems.images.length})</span>
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {purchasedItems.images.map((item) => (
-                  <Link
-                    key={item._id}
-                    to={getItemLink('images', item._id)}
-                    className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-100 hover:border-blue-200"
-                  >
-                    <div className="aspect-square bg-gray-100 overflow-hidden">
-                      <img
-                        src={item.previewUrl}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="p-2">
-                      <p className="text-xs font-medium text-gray-800 truncate">{item.title}</p>
-                      <div className="flex items-center text-blue-600 text-xs mt-1 group-hover:underline">
-                        <span>View</span>
-                        <HiExternalLink className="ml-0.5" />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+          <div className="space-y-3">
+            {/* Purchased Images */}
+            {purchasedItems.images.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-blue-700 uppercase tracking-wider mb-2 flex items-center space-x-2">
+                  <HiPhotograph className="text-lg" />
+                  <span>Images ({purchasedItems.images.length})</span>
+                </h3>
+                <div className="space-y-1">
+                  {purchasedItems.images.map((item) => (
+                    <Link
+                      key={item._id}
+                      to={getItemLink('images', item._id)}
+                      className="flex items-center space-x-2 py-2 px-3 rounded-lg text-sm text-gray-700 hover:text-blue-700 hover:bg-blue-50 transition-all group"
+                    >
+                      <HiPhotograph className="text-blue-500 text-base shrink-0" />
+                      <span className="truncate group-hover:underline">{item.title}</span>
+                      <HiExternalLink className="text-gray-400 text-xs shrink-0 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Purchased Recipe Books */}
-          {purchasedItems.recipeBooks.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-sm font-semibold text-amber-700 uppercase tracking-wider mb-3 flex items-center space-x-2">
-                <HiBookOpen className="text-lg" />
-                <span>Recipe Books ({purchasedItems.recipeBooks.length})</span>
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {purchasedItems.recipeBooks.map((item) => (
-                  <Link
-                    key={item._id}
-                    to={getItemLink('recipeBooks', item._id)}
-                    className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-100 hover:border-amber-200"
-                  >
-                    <div className="aspect-[3/4] bg-gray-100 overflow-hidden">
-                      <img
-                        src={item.coverImage}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="p-2">
-                      <p className="text-xs font-medium text-gray-800 truncate">{item.title}</p>
-                      <div className="flex items-center text-amber-600 text-xs mt-1 group-hover:underline">
-                        <span>Read</span>
-                        <HiExternalLink className="ml-0.5" />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+            {/* Purchased Recipe Books */}
+            {purchasedItems.recipeBooks.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-amber-700 uppercase tracking-wider mb-2 flex items-center space-x-2">
+                  <HiBookOpen className="text-lg" />
+                  <span>Recipe Books ({purchasedItems.recipeBooks.length})</span>
+                </h3>
+                <div className="space-y-1">
+                  {purchasedItems.recipeBooks.map((item) => (
+                    <Link
+                      key={item._id}
+                      to={getItemLink('recipeBooks', item._id)}
+                      className="flex items-center space-x-2 py-2 px-3 rounded-lg text-sm text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition-all group"
+                    >
+                      <HiBookOpen className="text-amber-500 text-base shrink-0" />
+                      <span className="truncate group-hover:underline">{item.title}</span>
+                      <HiExternalLink className="text-gray-400 text-xs shrink-0 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Purchased Training Videos */}
-          {purchasedItems.trainingVideos.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wider mb-3 flex items-center space-x-2">
-                <HiPlay className="text-lg" />
-                <span>Training Videos ({purchasedItems.trainingVideos.length})</span>
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {purchasedItems.trainingVideos.map((item) => (
-                  <Link
-                    key={item._id}
-                    to={getItemLink('trainingVideos', item._id)}
-                    className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-100 hover:border-emerald-200"
-                  >
-                    <div className="aspect-video bg-gray-900 overflow-hidden relative">
-                      <img
-                        src={item.thumbnailUrl}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                          <HiPlay className="text-white text-lg" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-2">
-                      <p className="text-xs font-medium text-gray-800 truncate">{item.title}</p>
-                      <div className="flex items-center text-emerald-600 text-xs mt-1 group-hover:underline">
-                        <span>Watch</span>
-                        <HiExternalLink className="ml-0.5" />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+            {/* Purchased Training Videos */}
+            {purchasedItems.trainingVideos.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wider mb-2 flex items-center space-x-2">
+                  <HiPlay className="text-lg" />
+                  <span>Training Videos ({purchasedItems.trainingVideos.length})</span>
+                </h3>
+                <div className="space-y-1">
+                  {purchasedItems.trainingVideos.map((item) => (
+                    <Link
+                      key={item._id}
+                      to={getItemLink('trainingVideos', item._id)}
+                      className="flex items-center space-x-2 py-2 px-3 rounded-lg text-sm text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 transition-all group"
+                    >
+                      <HiPlay className="text-emerald-500 text-base shrink-0" />
+                      <span className="truncate group-hover:underline">{item.title}</span>
+                      <HiExternalLink className="text-gray-400 text-xs shrink-0 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
