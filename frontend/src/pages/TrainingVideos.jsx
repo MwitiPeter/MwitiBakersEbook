@@ -155,7 +155,7 @@ export default function TrainingVideos() {
                     <button
                       onClick={(e) => { e.stopPropagation(); handlePurchase(video); }}
                       disabled={purchasing}
-                      className="w-full text-xs sm:text-sm bg-brand-gold text-white py-2 rounded-lg font-medium hover:bg-yellow-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                      className="w-full text-xs sm:text-sm bg-brand-gold text-white py-2 rounded-lg font-medium hover:bg-brand-gold-soft transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
                     >
                       <HiLockClosed className="text-sm" />
                       <span>Unlock</span>

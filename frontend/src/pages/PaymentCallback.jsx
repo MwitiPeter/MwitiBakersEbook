@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../api/axios';
 import { HiCheckCircle, HiXCircle } from 'react-icons/hi';
+import { WHATSAPP_URL } from '../constants/brand';
 
 export default function PaymentCallback() {
   const [searchParams] = useSearchParams();
@@ -67,6 +68,11 @@ export default function PaymentCallback() {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+        <img
+          src="/logo.jpg"
+          alt="Mwiti Bakers"
+          className="w-14 h-14 rounded-full mx-auto mb-6 shadow-gold object-cover"
+        />
         {status === 'verifying' && (
           <div>
             <div className="w-16 h-16 border-4 border-brand-gold border-t-brand-navy rounded-full animate-spin mx-auto mb-6"></div>
@@ -112,7 +118,10 @@ export default function PaymentCallback() {
                 </Link>
               )}
               <p className="text-sm text-gray-400 mt-2">
-                If you believe your payment was successful, your content should be unlocked automatically within a few minutes.
+                If you believe your payment was successful, your content should be unlocked automatically within a few minutes.{' '}
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-brand-gold hover:underline">
+                  Contact us on WhatsApp
+                </a>
               </p>
             </div>
           </div>

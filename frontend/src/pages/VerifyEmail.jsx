@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../api/axios';
-import { HiMail, HiCheckCircle } from 'react-icons/hi';
+import { HiCheckCircle } from 'react-icons/hi';
+import AuthBrandHeader from '../components/AuthBrandHeader';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -91,16 +92,10 @@ export default function VerifyEmail() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-brand-navy/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <HiMail className="text-3xl text-brand-navy" />
-          </div>
-          <h1 className="text-3xl font-bold text-brand-navy mt-2">Check Your Email</h1>
-          <p className="text-gray-600 mt-2">
-            We sent a verification code to<br />
-            <span className="font-semibold text-brand-navy">{email || 'your email'}</span>
-          </p>
-        </div>
+        <AuthBrandHeader
+          title="Check Your Email"
+          subtitle={`We sent a verification code to ${email || 'your email'}`}
+        />
 
         <div className="bg-white rounded-2xl shadow-lg p-8">
           {error && (
@@ -134,7 +129,7 @@ export default function VerifyEmail() {
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold border-2 rounded-xl focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all"
                   style={{
-                    borderColor: digit ? '#c89b5a' : '#e5e7eb',
+                    borderColor: digit ? '#D4AF37' : '#e5e7eb',
                   }}
                   autoFocus={index === 0}
                 />
@@ -154,7 +149,7 @@ export default function VerifyEmail() {
             <button
               onClick={handleResendCode}
               disabled={resending}
-              className="text-brand-gold font-medium hover:text-yellow-700 transition-colors text-sm disabled:opacity-50"
+              className="text-brand-gold font-medium hover:text-brand-navy transition-colors text-sm disabled:opacity-50"
             >
               {resending ? 'Sending...' : "Didn't receive the code? Resend"}
             </button>
