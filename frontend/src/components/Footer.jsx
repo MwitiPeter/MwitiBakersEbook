@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { HiMail, HiPhone, HiLocationMarker } from 'react-icons/hi';
+import { FaFacebook, FaInstagram, FaTiktok, FaLinkedin } from 'react-icons/fa';
 
 export default function Footer() {
   return (
@@ -8,13 +9,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
           <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <span className="text-2xl">🧁</span>
-              <div>
-                <h3 className="text-xl font-bold text-white">Mwiti Bakers</h3>
-                <span className="text-sm text-brand-gold">Home of Sweetness</span>
-              </div>
-            </div>
+            <Link to="/" className="inline-block mb-4">
+              <img
+                src="/logo.png"
+                alt="Mwiti Bakers"
+                className="h-14 w-auto object-contain"
+              />
+            </Link>
             <p className="text-gray-300 text-sm leading-relaxed">
               Premium digital bakery content platform. Unlock the sweetness of professional baking
               with our curated collection of images, recipe books, and training videos.
@@ -45,17 +46,61 @@ export default function Footer() {
             <h4 className="font-semibold text-brand-gold mb-4">Contact Us</h4>
             <div className="space-y-3">
               <a href="mailto:hello@mwitibakers.com" className="flex items-center space-x-2 text-gray-300 hover:text-white text-sm transition-colors">
-                <HiMail className="text-brand-gold" />
+                <HiMail className="text-brand-gold text-lg" />
                 <span>hello@mwitibakers.com</span>
               </a>
-              <a href="tel:+254700000000" className="flex items-center space-x-2 text-gray-300 hover:text-white text-sm transition-colors">
-                <HiPhone className="text-brand-gold" />
-                <span>+254 700 000 000</span>
+              <a href="tel:+254757365203" className="flex items-center space-x-2 text-gray-300 hover:text-white text-sm transition-colors">
+                <HiPhone className="text-brand-gold text-lg" />
+                <span>0757365203</span>
               </a>
               <div className="flex items-start space-x-2 text-gray-300 text-sm">
-                <HiLocationMarker className="text-brand-gold mt-0.5" />
+                <HiLocationMarker className="text-brand-gold mt-0.5 text-lg" />
                 <span>Nairobi, Kenya</span>
               </div>
+            </div>
+
+            <h4 className="font-semibold text-brand-gold mb-3 mt-6">Follow Us</h4>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="https://instagram.com/mwiti_bakers"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 bg-white/10 hover:bg-pink-600 text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                title="Instagram"
+              >
+                <FaInstagram className="text-lg" />
+                <span>@mwiti_bakers</span>
+              </a>
+              <a
+                href="https://tiktok.com/@mwiti_bakers"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 bg-white/10 hover:bg-black text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                title="TikTok"
+              >
+                <FaTiktok className="text-lg" />
+                <span>@mwt_bakers</span>
+              </a>
+              <a
+                href="https://linkedin.com/company/mwiti-bakers"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 bg-white/10 hover:bg-blue-700 text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                title="LinkedIn"
+              >
+                <FaLinkedin className="text-lg" />
+                <span>Mwiti Bakers</span>
+              </a>
+              <a
+                href="https://facebook.com/mwiti.bakers"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 bg-white/10 hover:bg-blue-600 text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                title="Facebook"
+              >
+                <FaFacebook className="text-lg" />
+                <span>mwiti.bakers</span>
+              </a>
             </div>
           </div>
         </div>

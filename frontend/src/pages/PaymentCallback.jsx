@@ -9,7 +9,6 @@ export default function PaymentCallback() {
   const itemType = searchParams.get('itemType');
   const itemId = searchParams.get('itemId');
   const [status, setStatus] = useState('verifying');
-  const [message, setMessage] = useState('');
 
   const getRedirectPath = () => {
     if (itemType && itemId) {
@@ -39,7 +38,6 @@ export default function PaymentCallback() {
   useEffect(() => {
     if (!reference) {
       setStatus('error');
-      setMessage('No payment reference found.');
       return;
     }
 
@@ -48,14 +46,11 @@ export default function PaymentCallback() {
         const { data } = await API.get(`/payments/verify/${reference}`);
         if (data.success) {
           setStatus('success');
-          setMessage('Payment successful! Your content has been unlocked.');
         } else {
           setStatus('error');
-          setMessage(data.message || 'Payment verification failed. Please contact support.');
         }
       } catch (err) {
         setStatus('error');
-        setMessage(err.response?.data?.message || 'Verification failed. Please contact support.');
       }
     };
 
@@ -78,13 +73,6 @@ export default function PaymentCallback() {
         {status === 'success' && (
           <div>
             <HiCheckCircle className="text-6xl text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-green-700 mb-2">Payment Successful!</h2>
-            <p className="text-gray-600 mb-2">{message}</p>
-            {itemType && (
-              <p className="text-sm text-gray-500 mb-6 capitalize">
-                Your {itemType === 'trainingVideo' ? 'video' : itemType} is now unlocked.
-              </p>
-            )}
             <Link
               to={getRedirectPath()}
               className="btn-primary inline-flex items-center justify-center space-x-2 w-full"
@@ -98,7 +86,7 @@ export default function PaymentCallback() {
           <div>
             <HiXCircle className="text-6xl text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-red-700 mb-2">Payment Issue</h2>
-            <p className="text-gray-600 mb-6">{message}</p>
+            <p className="text-gray-600 mb-6">We couldn't verify your payment. If funds were deducted, your content will be unlocked shortly.</p>
             <div className="flex flex-col gap-3">
               <Link
                 to={getRedirectPath()}

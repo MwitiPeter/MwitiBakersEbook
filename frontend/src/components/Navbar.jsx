@@ -34,13 +34,11 @@ export default function Navbar() {
         <div className="flex justify-between h-16 items-center">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
-            <span className="text-2xl">🧁</span>
-            <div>
-              <span className="text-xl font-bold text-brand-navy group-hover:text-brand-gold transition-colors">
-                Mwiti Bakers
-              </span>
-              <span className="block text-xs text-brand-gold -mt-1">Home of Sweetness</span>
-            </div>
+            <img
+              src="/logo.png"
+              alt="Mwiti Bakers"
+              className="h-10 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Nav */}

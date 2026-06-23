@@ -1,29 +1,47 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { HiPhotograph, HiBookOpen, HiPlay, HiArrowRight } from 'react-icons/hi';
+import { HiPhotograph, HiBookOpen, HiPlay, HiArrowRight, HiExternalLink } from 'react-icons/hi';
 import { useState, useEffect } from 'react';
 import API from '../api/axios';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({ images: 0, recipeBooks: 0, trainingVideos: 0 });
+  const [purchasedItems, setPurchasedItems] = useState({ images: [], recipeBooks: [], trainingVideos: [] });
   const [recentPurchases, setRecentPurchases] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [imagesRes, booksRes, videosRes, paymentsRes] = await Promise.all([
+        const [imagesRes, booksRes, videosRes, paymentsRes, userRes] = await Promise.all([
           API.get('/images'),
           API.get('/recipe-books'),
           API.get('/training-videos'),
           API.get('/payments/history'),
+          API.get('/auth/me'),
         ]);
+
+        const allImages = imagesRes.data;
+        const allBooks = booksRes.data;
+        const allVideos = videosRes.data;
+        const purchasedIds = userRes.data.purchasedItems;
+
         setStats({
-          images: imagesRes.data.length,
-          recipeBooks: booksRes.data.length,
-          trainingVideos: videosRes.data.length,
+          images: allImages.length,
+          recipeBooks: allBooks.length,
+          trainingVideos: allVideos.length,
         });
-        setRecentPurchases(paymentsRes.data.slice(0, 5));
+
+        // Filter purchased items with full data
+        if (purchasedIds) {
+          setPurchasedItems({
+            images: allImages.filter((img) => purchasedIds.images?.some((id) => id._id === img._id || id === img._id)),
+            recipeBooks: allBooks.filter((book) => purchasedIds.recipeBooks?.some((id) => id._id === book._id || id === book._id)),
+            trainingVideos: allVideos.filter((video) => purchasedIds.trainingVideos?.some((id) => id._id === video._id || id === video._id)),
+          });
+        }
+
+        setRecentPurchases(paymentsRes.data);
       } catch (err) {
         console.error('Dashboard data error:', err);
       }
@@ -31,13 +49,16 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  const getPurchasedCount = (type) => purchasedItems[type]?.length || 0;
+
   const sections = [
     {
       title: 'Image Gallery',
       description: 'Browse and download premium baking images',
       icon: HiPhotograph,
       path: '/gallery',
-      count: stats.images,
+      total: stats.images,
+      purchased: getPurchasedCount('images'),
       color: 'from-blue-600 to-blue-800',
       bg: 'bg-blue-50',
     },
@@ -46,7 +67,8 @@ export default function Dashboard() {
       description: 'Unlock professional recipe books in PDF format',
       icon: HiBookOpen,
       path: '/recipe-books',
-      count: stats.recipeBooks,
+      total: stats.recipeBooks,
+      purchased: getPurchasedCount('recipeBooks'),
       color: 'from-amber-500 to-yellow-700',
       bg: 'bg-amber-50',
     },
@@ -55,18 +77,39 @@ export default function Dashboard() {
       description: 'Stream expert baking tutorials',
       icon: HiPlay,
       path: '/training-videos',
-      count: stats.trainingVideos,
+      total: stats.trainingVideos,
+      purchased: getPurchasedCount('trainingVideos'),
       color: 'from-emerald-500 to-emerald-700',
       bg: 'bg-emerald-50',
     },
   ];
+
+  const hasPurchases = purchasedItems.images.length > 0 || purchasedItems.recipeBooks.length > 0 || purchasedItems.trainingVideos.length > 0;
+
+  const getItemLink = (type, id) => {
+    switch (type) {
+      case 'images': return `/gallery?itemId=${id}`;
+      case 'recipeBooks': return `/recipe-books?itemId=${id}`;
+      case 'trainingVideos': return `/training-videos?itemId=${id}`;
+      default: return '/dashboard';
+    }
+  };
+
+  const getItemTypeIcon = (type) => {
+    switch (type) {
+      case 'images': return { icon: HiPhotograph, color: 'bg-blue-600' };
+      case 'recipeBooks': return { icon: HiBookOpen, color: 'bg-amber-600' };
+      case 'trainingVideos': return { icon: HiPlay, color: 'bg-emerald-600' };
+      default: return { icon: HiPlay, color: 'bg-gray-600' };
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Welcome */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-brand-navy">
-          Welcome back, {user?.name || 'Baker'}! 🧁
+          Welcome back, {user?.name || 'Baker'}!
         </h1>
         <p className="text-gray-600 mt-1">Here's what's available for you today.</p>
       </div>
@@ -84,7 +127,14 @@ export default function Dashboard() {
                 <div className={`w-12 h-12 bg-gradient-to-br ${section.color} rounded-xl flex items-center justify-center`}>
                   <section.icon className="text-2xl text-white" />
                 </div>
-                <span className="text-2xl font-bold text-gray-400">{section.count}</span>
+                <div className="text-right">
+                  <span className="text-2xl font-bold text-gray-400">{section.total}</span>
+                  {section.purchased > 0 && (
+                    <p className="text-xs text-green-600 font-medium">
+                      {section.purchased} purchased
+                    </p>
+                  )}
+                </div>
               </div>
               <h3 className="text-lg font-bold text-brand-navy mb-1">{section.title}</h3>
               <p className="text-gray-500 text-sm mb-4">{section.description}</p>
@@ -97,43 +147,167 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Recent Activity / Purchased Items */}
-      <div className="bg-white rounded-2xl shadow-md p-6">
-        <h2 className="text-xl font-bold text-brand-navy mb-4">Recent Activity</h2>
-        {recentPurchases.length > 0 ? (
-          <div className="space-y-3">
-            {recentPurchases.map((payment) => (
-              <div
-                key={payment._id}
-                className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white
-                    ${payment.itemType === 'image' ? 'bg-blue-600' : payment.itemType === 'recipeBook' ? 'bg-amber-600' : 'bg-emerald-600'}`}>
-                    {payment.itemType === 'image' ? (
-                      <HiPhotograph />
-                    ) : payment.itemType === 'recipeBook' ? (
-                      <HiBookOpen />
-                    ) : (
-                      <HiPlay />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800 text-sm">
-                      {payment.metadata?.itemTitle || `${payment.itemType} purchased`}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(payment.createdAt).toLocaleDateString()} &middot; KES {payment.amount}
-                    </p>
-                  </div>
-                </div>
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                  payment.status === 'success' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
-                }`}>
-                  {payment.status}
-                </span>
+      {/* My Purchased Items */}
+      {hasPurchases && (
+        <div className="mb-12">
+          <h2 className="text-xl font-bold text-brand-navy mb-6">My Purchased Items</h2>
+
+          {/* Purchased Images */}
+          {purchasedItems.images.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-sm font-semibold text-blue-700 uppercase tracking-wider mb-3 flex items-center space-x-2">
+                <HiPhotograph className="text-lg" />
+                <span>Images ({purchasedItems.images.length})</span>
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {purchasedItems.images.map((item) => (
+                  <Link
+                    key={item._id}
+                    to={getItemLink('images', item._id)}
+                    className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-100 hover:border-blue-200"
+                  >
+                    <div className="aspect-square bg-gray-100 overflow-hidden">
+                      <img
+                        src={item.previewUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs font-medium text-gray-800 truncate">{item.title}</p>
+                      <div className="flex items-center text-blue-600 text-xs mt-1 group-hover:underline">
+                        <span>View</span>
+                        <HiExternalLink className="ml-0.5" />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
               </div>
-            ))}
+            </div>
+          )}
+
+          {/* Purchased Recipe Books */}
+          {purchasedItems.recipeBooks.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-sm font-semibold text-amber-700 uppercase tracking-wider mb-3 flex items-center space-x-2">
+                <HiBookOpen className="text-lg" />
+                <span>Recipe Books ({purchasedItems.recipeBooks.length})</span>
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {purchasedItems.recipeBooks.map((item) => (
+                  <Link
+                    key={item._id}
+                    to={getItemLink('recipeBooks', item._id)}
+                    className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-100 hover:border-amber-200"
+                  >
+                    <div className="aspect-[3/4] bg-gray-100 overflow-hidden">
+                      <img
+                        src={item.coverImage}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs font-medium text-gray-800 truncate">{item.title}</p>
+                      <div className="flex items-center text-amber-600 text-xs mt-1 group-hover:underline">
+                        <span>Read</span>
+                        <HiExternalLink className="ml-0.5" />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Purchased Training Videos */}
+          {purchasedItems.trainingVideos.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wider mb-3 flex items-center space-x-2">
+                <HiPlay className="text-lg" />
+                <span>Training Videos ({purchasedItems.trainingVideos.length})</span>
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {purchasedItems.trainingVideos.map((item) => (
+                  <Link
+                    key={item._id}
+                    to={getItemLink('trainingVideos', item._id)}
+                    className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-100 hover:border-emerald-200"
+                  >
+                    <div className="aspect-video bg-gray-900 overflow-hidden relative">
+                      <img
+                        src={item.thumbnailUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <HiPlay className="text-white text-lg" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs font-medium text-gray-800 truncate">{item.title}</p>
+                      <div className="flex items-center text-emerald-600 text-xs mt-1 group-hover:underline">
+                        <span>Watch</span>
+                        <HiExternalLink className="ml-0.5" />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Recent Payment History */}
+      <div className="bg-white rounded-2xl shadow-md p-6">
+        <h2 className="text-xl font-bold text-brand-navy mb-4">Payment History</h2>
+        {recentPurchases.length > 0 ? (
+          <div className="space-y-2">
+            {recentPurchases.map((payment) => {
+              const typeInfo = getItemTypeIcon(
+                payment.itemType === 'image' ? 'images' :
+                payment.itemType === 'recipeBook' ? 'recipeBooks' : 'trainingVideos'
+              );
+              const itemLink = getItemLink(
+                payment.itemType === 'image' ? 'images' :
+                payment.itemType === 'recipeBook' ? 'recipeBooks' : 'trainingVideos',
+                payment.itemId
+              );
+              return (
+                <Link
+                  key={payment._id}
+                  to={itemLink}
+                  className="flex items-center justify-between py-3 px-3 rounded-xl border border-gray-100 hover:border-brand-gold/30 hover:bg-brand-cream/50 transition-all"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white ${typeInfo.color}`}>
+                      <typeInfo.icon className="text-lg" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800 text-sm">
+                        {payment.metadata?.itemTitle || `${payment.itemType.replace(/([A-Z])/g, ' $1').trim()} purchased`}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(payment.createdAt).toLocaleDateString()} &middot; KES {payment.amount?.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      payment.status === 'success' ? 'bg-green-50 text-green-700' :
+                      payment.status === 'pending' ? 'bg-yellow-50 text-yellow-700' :
+                      'bg-red-50 text-red-700'
+                    }`}>
+                      {payment.status === 'success' ? 'Completed' : payment.status}
+                    </span>
+                    <HiExternalLink className="text-gray-400 text-sm" />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-8">
