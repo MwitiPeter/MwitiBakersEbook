@@ -11,7 +11,7 @@ export default function Footer() {
           <div>
             <Link to="/" className="inline-block mb-4">
               <img
-                src="/NewLogo.jpg"
+                src="/logo.png"
                 alt="Mwiti Bakers"
                 className="h-14 w-auto object-contain brightness-0 invert"
               />
