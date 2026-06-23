@@ -32,6 +32,12 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const { data } = await API.post('/auth/login', { email, password });
+
+    // If email verification is required, don't store token yet
+    if (data.requiresVerification) {
+      return data;
+    }
+
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
@@ -40,6 +46,12 @@ export function AuthProvider({ children }) {
 
   const signup = async (name, email, password) => {
     const { data } = await API.post('/auth/signup', { name, email, password });
+
+    // If verification is required, don't auto-login
+    if (data.requiresVerification) {
+      return data;
+    }
+
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);

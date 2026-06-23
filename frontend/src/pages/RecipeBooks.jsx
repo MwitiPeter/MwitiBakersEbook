@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import API from '../api/axios';
 import ImageWithFallback from '../components/ImageWithFallback';
 import { HiLockClosed, HiDownload, HiEye, HiX, HiBookOpen } from 'react-icons/hi';
 
 export default function RecipeBooks() {
+  const [searchParams] = useSearchParams();
+  const redirectItemId = searchParams.get('itemId');
+
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBook, setSelectedBook] = useState(null);
@@ -17,7 +21,16 @@ export default function RecipeBooks() {
         const { data } = await API.get('/recipe-books');
         setBooks(data);
         const userRes = await API.get('/auth/me');
-        setPurchasedIds(userRes.data.purchasedItems?.recipeBooks?.map((b) => b._id || b) || []);
+        const ids = userRes.data.purchasedItems?.recipeBooks?.map((b) => b._id || b) || [];
+        setPurchasedIds(ids);
+
+        // If redirected from payment callback, auto-open the purchased item
+        if (redirectItemId) {
+          const purchased = data.find((b) => b._id === redirectItemId);
+          if (purchased) {
+            handleViewDetail(purchased);
+          }
+        }
       } catch (err) {
         console.error('Error fetching recipe books:', err);
       } finally {
@@ -25,7 +38,7 @@ export default function RecipeBooks() {
       }
     };
     fetchBooks();
-  }, []);
+  }, [redirectItemId]);
 
   const handlePurchase = async (book) => {
     setError('');
@@ -67,10 +80,12 @@ export default function RecipeBooks() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="text-center mb-10">
-        <h1 className="section-title">Recipe Books</h1>
-        <p className="section-subtitle">Download professional baking recipe books filled with expert techniques.</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="text-center mb-8 sm:mb-10">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-navy">Recipe Books</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-2 max-w-2xl mx-auto">
+          Download professional baking recipe books filled with expert techniques.
+        </p>
       </div>
 
       {error && (
@@ -85,7 +100,7 @@ export default function RecipeBooks() {
           <p className="text-gray-400 mt-4 text-lg">No recipe books available yet. Check back soon!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {books.map((book) => (
             <div
               key={book._id}
@@ -97,14 +112,19 @@ export default function RecipeBooks() {
                   src={book.coverImage}
                   alt={book.title}
                   type="book"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                    !purchasedIds.includes(book._id) ? 'blur-sm' : ''
+                  }`}
                 />
                 {!purchasedIds.includes(book._id) && (
-                  <div className="absolute inset-0 backdrop-blur-md bg-white/10 flex items-center justify-center">
-                    <div className="bg-white/90 rounded-full p-3 shadow-lg">
-                      <HiLockClosed className="text-2xl text-brand-navy" />
+                  <>
+                    <div className="absolute inset-0 backdrop-blur-md bg-white/10 flex items-center justify-center">
+                      <div className="bg-white/90 rounded-full p-3 shadow-lg">
+                        <HiLockClosed className="text-xl sm:text-2xl text-brand-navy" />
+                      </div>
                     </div>
-                  </div>
+                    <div className="absolute inset-0 bg-brand-navy/5"></div>
+                  </>
                 )}
                 <div className="absolute top-3 right-3 bg-brand-navy text-white text-xs font-bold px-2 py-1 rounded-full">
                   KES {book.price}
@@ -115,30 +135,30 @@ export default function RecipeBooks() {
                   </div>
                 )}
               </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-brand-navy truncate">{book.title}</h3>
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">{book.description || 'No description'}</p>
+              <div className="p-3 sm:p-4">
+                <h3 className="font-semibold text-brand-navy text-sm sm:text-base truncate">{book.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-2">{book.description || 'No description'}</p>
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleViewDetail(book); }}
-                    className="flex-1 text-sm bg-brand-cream text-brand-navy py-2 rounded-lg font-medium hover:bg-brand-navy hover:text-white transition-colors flex items-center justify-center space-x-1"
+                    className="flex-1 text-xs sm:text-sm bg-brand-cream text-brand-navy py-2 rounded-lg font-medium hover:bg-brand-navy hover:text-white transition-colors flex items-center justify-center space-x-1"
                   >
-                    <HiEye />
+                    <HiEye className="text-sm" />
                     <span>Preview</span>
                   </button>
                   {purchasedIds.includes(book._id) ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); handleViewDetail(book); }}
-                      className="flex-1 text-sm bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-1"
+                      className="flex-1 text-xs sm:text-sm bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-1"
                     >
-                      <HiDownload />
+                      <HiDownload className="text-sm" />
                       <span>Read</span>
                     </button>
                   ) : (
                     <button
                       onClick={(e) => { e.stopPropagation(); handlePurchase(book); }}
                       disabled={purchasing}
-                      className="flex-1 text-sm bg-brand-gold text-white py-2 rounded-lg font-medium hover:bg-yellow-700 transition-colors disabled:opacity-50"
+                      className="flex-1 text-xs sm:text-sm bg-brand-gold text-white py-2 rounded-lg font-medium hover:bg-yellow-700 transition-colors disabled:opacity-50"
                     >
                       Unlock
                     </button>
@@ -152,14 +172,14 @@ export default function RecipeBooks() {
 
       {/* Detail Modal */}
       {selectedBook && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setSelectedBook(null)}>
-          <div className="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60" onClick={() => setSelectedBook(null)}>
+          <div className="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto m-2 sm:m-4" onClick={(e) => e.stopPropagation()}>
             <div className="relative">
               <button
                 onClick={() => setSelectedBook(null)}
-                className="absolute top-4 right-4 z-10 bg-white/90 rounded-full p-2 hover:bg-white shadow-lg transition-colors"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 bg-white/90 rounded-full p-1.5 sm:p-2 hover:bg-white shadow-lg transition-colors"
               >
-                <HiX className="text-xl" />
+                <HiX className="text-lg sm:text-xl" />
               </button>
               <div className="relative aspect-[3/4] bg-gray-100">
                 <ImageWithFallback
@@ -170,38 +190,38 @@ export default function RecipeBooks() {
                 />
                 {selectedBook.isLocked && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <HiLockClosed className="text-5xl text-white mb-2 mx-auto" />
-                      <p className="text-white font-semibold">Unlock to read this recipe book</p>
+                    <div className="text-center px-4">
+                      <HiLockClosed className="text-4xl sm:text-5xl text-white mb-2 mx-auto" />
+                      <p className="text-white font-semibold text-sm sm:text-base">Unlock to read this recipe book</p>
                     </div>
                   </div>
                 )}
               </div>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center space-x-2 text-brand-navy mb-2">
                 <HiBookOpen />
                 <span className="text-sm font-medium">{selectedBook.pages || '?'} pages</span>
               </div>
-              <h2 className="text-2xl font-bold text-brand-navy">{selectedBook.title}</h2>
-              <p className="text-gray-600 mt-2">{selectedBook.description}</p>
-              <div className="flex items-center justify-between mt-6">
-                <span className="text-2xl font-bold text-brand-gold">KES {selectedBook.price}</span>
+              <h2 className="text-xl sm:text-2xl font-bold text-brand-navy">{selectedBook.title}</h2>
+              <p className="text-sm sm:text-base text-gray-600 mt-2">{selectedBook.description}</p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6">
+                <span className="text-xl sm:text-2xl font-bold text-brand-gold">KES {selectedBook.price}</span>
                 {selectedBook.isLocked ? (
                   <button
                     onClick={() => handlePurchase(selectedBook)}
                     disabled={purchasing}
-                    className="btn-gold disabled:opacity-50"
+                    className="btn-gold w-full sm:w-auto disabled:opacity-50 text-center"
                   >
                     {purchasing ? 'Processing...' : 'Unlock Now'}
                   </button>
                 ) : (
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <a
                       href={selectedBook.pdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn-primary flex items-center space-x-2"
+                      className="btn-primary flex items-center justify-center space-x-2"
                     >
                       <HiBookOpen />
                       <span>Read Online</span>
@@ -209,7 +229,7 @@ export default function RecipeBooks() {
                     <a
                       href={selectedBook.pdfUrl}
                       download
-                      className="btn-gold flex items-center space-x-2"
+                      className="btn-gold flex items-center justify-center space-x-2"
                     >
                       <HiDownload />
                       <span>Download PDF</span>

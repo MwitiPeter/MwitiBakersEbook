@@ -65,7 +65,7 @@ router.post(
       };
 
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      const callbackUrl = `${frontendUrl}/payment/callback`;
+      const callbackUrl = `${frontendUrl}/payment/callback?itemType=${itemType}&itemId=${itemId}`;
 
       const payment = await initializePayment(
         req.user.email,

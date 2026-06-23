@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema(
   {
@@ -26,6 +27,19 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationCode: {
+      type: String,
+    },
+    verificationCodeExpires: {
+      type: Date,
+    },
+    lastLogin: {
+      type: Date,
+    },
     purchasedItems: {
       images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Image' }],
       recipeBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'RecipeBook' }],
@@ -49,7 +63,23 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;
+  delete obj.verificationCode;
+  delete obj.verificationCodeExpires;
   return obj;
+};
+
+// Generate a 6-digit verification code
+userSchema.methods.generateVerificationCode = function () {
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  this.verificationCode = crypto.createHash('sha256').update(code).digest('hex');
+  this.verificationCodeExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+  return code;
+};
+
+// Compare a plain code against the stored hash
+userSchema.methods.compareVerificationCode = function (code) {
+  const hashed = crypto.createHash('sha256').update(code).digest('hex');
+  return this.verificationCode === hashed && this.verificationCodeExpires > new Date();
 };
 
 module.exports = mongoose.model('User', userSchema);

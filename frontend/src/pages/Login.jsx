@@ -20,10 +20,19 @@ export default function Login() {
 
     setLoading(true);
     try {
-      await login(formData.email, formData.password);
+      const data = await login(formData.email, formData.password);
+      if (data.requiresVerification) {
+        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        return;
+      }
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      const responseData = err.response?.data;
+      if (responseData?.requiresVerification) {
+        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        return;
+      }
+      setError(responseData?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }

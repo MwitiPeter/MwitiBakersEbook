@@ -30,10 +30,23 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      await signup(formData.name, formData.email, formData.password);
-      navigate('/dashboard');
+      const data = await signup(formData.name, formData.email, formData.password);
+      if (data.requiresVerification) {
+        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Signup failed. Please try again.');
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.errors?.[0]?.msg ||
+        'Signup failed. Please try again.';
+      // If user already exists but unverified, redirect to verification
+      if (err.response?.data?.requiresVerification) {
+        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        return;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }

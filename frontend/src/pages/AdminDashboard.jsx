@@ -10,13 +10,19 @@ import {
   HiX,
   HiEye,
   HiEyeOff,
+  HiCash,
+  HiUsers,
+  HiTrendingUp,
+  HiShoppingCart,
 } from 'react-icons/hi';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('images');
+  const [activeTab, setActiveTab] = useState('overview');
   const [images, setImages] = useState([]);
   const [books, setBooks] = useState([]);
   const [videos, setVideos] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [userActivity, setUserActivity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -26,6 +32,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
 
   const tabs = [
+    { id: 'overview', label: 'Overview', icon: HiTrendingUp },
     { id: 'images', label: 'Images', icon: HiPhotograph },
     { id: 'recipeBooks', label: 'Recipe Books', icon: HiBookOpen },
     { id: 'trainingVideos', label: 'Training Videos', icon: HiPlay },
@@ -38,20 +45,42 @@ export default function AdminDashboard() {
   const fetchAllContent = async () => {
     setLoading(true);
     try {
-      const [imgRes, bookRes, vidRes] = await Promise.all([
+      const [imgRes, bookRes, vidRes, payRes, usersRes] = await Promise.all([
         API.get('/images/admin/all'),
         API.get('/recipe-books/admin/all'),
         API.get('/training-videos/admin/all'),
+        API.get('/payments/admin/all'),
+        API.get('/auth/admin/users'),
       ]);
       setImages(imgRes.data);
       setBooks(bookRes.data);
       setVideos(vidRes.data);
+      setPayments(payRes.data);
+      setUserActivity(usersRes.data);
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
     }
   };
+
+  // Compute stats
+  const totalRevenue = payments
+    .filter((p) => p.status === 'success')
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const totalBuyers = new Set(
+    payments.filter((p) => p.status === 'success').map((p) => p.user?._id || p.user)
+  ).size;
+
+  const totalSales = payments.filter((p) => p.status === 'success').length;
+  const pendingSales = payments.filter((p) => p.status === 'pending').length;
+  const totalContent = images.length + books.length + videos.length;
+  const visibleContent = [images, books, videos].flat().filter((i) => i.isVisible !== false).length;
+
+  const recentBuyers = [...payments]
+    .filter((p) => p.status === 'success')
+    .slice(0, 10);
 
   const resetForm = () => {
     setShowForm(false);
@@ -95,15 +124,6 @@ export default function AdminDashboard() {
       case 'recipeBooks': return 'recipe-books';
       case 'trainingVideos': return 'training-videos';
       default: return 'images';
-    }
-  };
-
-  const getItemTypeForApi = (type) => {
-    switch (type) {
-      case 'images': return 'image';
-      case 'recipeBooks': return 'recipeBook';
-      case 'trainingVideos': return 'trainingVideo';
-      default: return 'image';
     }
   };
 
@@ -166,7 +186,9 @@ export default function AdminDashboard() {
       ],
     };
 
-    return fields[activeTab]?.map((field) => (
+    if (!fields[activeTab]) return null;
+
+    return fields[activeTab].map((field) => (
       <div key={field.name}>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           {field.label} {field.required && <span className="text-red-500">*</span>}
@@ -192,40 +214,40 @@ export default function AdminDashboard() {
   };
 
   const renderItemCard = (item, index) => (
-    <div key={item._id} className="card flex items-center justify-between p-4">
-      <div className="flex items-center space-x-4 flex-1 min-w-0">
-        <span className="text-gray-400 text-sm w-6">#{index + 1}</span>
+    <div key={item._id} className="card flex items-center justify-between p-3 sm:p-4">
+      <div className="flex items-center space-x-3 flex-1 min-w-0">
+        <span className="text-gray-400 text-xs sm:text-sm w-5 flex-shrink-0">#{index + 1}</span>
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-brand-navy truncate">{item.title}</h4>
-          <p className="text-sm text-gray-500">KES {item.price}</p>
+          <h4 className="font-semibold text-brand-navy text-sm sm:text-base truncate">{item.title}</h4>
+          <p className="text-xs sm:text-sm text-gray-500">KES {item.price}</p>
         </div>
-        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+        <span className={`text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ${
           item.isVisible !== false ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
         }`}>
           {item.isVisible !== false ? 'Visible' : 'Hidden'}
         </span>
       </div>
-      <div className="flex items-center space-x-2 ml-4">
+      <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
         <button
           onClick={() => handleToggleVisibility(activeTab, item._id, item.isVisible !== false)}
-          className="p-2 rounded-lg text-gray-400 hover:text-brand-navy hover:bg-brand-cream transition-colors"
+          className="p-1.5 sm:p-2 rounded-lg text-gray-400 hover:text-brand-navy hover:bg-brand-cream transition-colors"
           title="Toggle visibility"
         >
-          {item.isVisible !== false ? <HiEyeOff /> : <HiEye />}
+          {item.isVisible !== false ? <HiEyeOff className="text-sm sm:text-base" /> : <HiEye className="text-sm sm:text-base" />}
         </button>
         <button
           onClick={() => handleEdit(item)}
-          className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+          className="p-1.5 sm:p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
           title="Edit"
         >
-          <HiPencil />
+          <HiPencil className="text-sm sm:text-base" />
         </button>
         <button
           onClick={() => handleDelete(activeTab, item._id)}
-          className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+          className="p-1.5 sm:p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
           title="Delete"
         >
-          <HiTrash />
+          <HiTrash className="text-sm sm:text-base" />
         </button>
       </div>
     </div>
@@ -240,141 +262,372 @@ export default function AdminDashboard() {
     }
   };
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-brand-navy">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage all content on Mwiti Bakers</p>
+  const renderOverviewDashboard = () => (
+    <div className="space-y-6">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+              <HiCash className="text-xl text-green-600" />
+            </div>
+            <HiTrendingUp className="text-green-500 text-lg" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-brand-navy">KES {totalRevenue.toLocaleString()}</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Total Revenue</p>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true); }}
-          className="btn-primary flex items-center space-x-2"
-        >
-          <HiPlus />
-          <span>Add New</span>
-        </button>
+
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+              <HiShoppingCart className="text-xl text-blue-600" />
+            </div>
+            <span className="bg-blue-50 text-blue-600 text-xs font-semibold px-2 py-0.5 rounded-full">{totalSales}</span>
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-brand-navy">{totalSales}</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Completed Sales</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+              <HiUsers className="text-xl text-purple-600" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-brand-navy">{totalBuyers}</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Unique Buyers</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+              <HiPhotograph className="text-xl text-amber-600" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-brand-navy">{totalContent}</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Total Items ({visibleContent} visible)</p>
+        </div>
+      </div>
+
+      {/* Content Breakdown */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+              <HiPhotograph className="text-lg text-blue-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-brand-navy">{images.length}</p>
+              <p className="text-xs text-gray-500">Images</p>
+            </div>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-1.5">
+            <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${(images.length / Math.max(totalContent, 1)) * 100}%` }}></div>
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+              <HiBookOpen className="text-lg text-amber-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-brand-navy">{books.length}</p>
+              <p className="text-xs text-gray-500">Recipe Books</p>
+            </div>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-1.5">
+            <div className="bg-amber-600 h-1.5 rounded-full" style={{ width: `${(books.length / Math.max(totalContent, 1)) * 100}%` }}></div>
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+              <HiPlay className="text-lg text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-brand-navy">{videos.length}</p>
+              <p className="text-xs text-gray-500">Training Videos</p>
+            </div>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-1.5">
+            <div className="bg-emerald-600 h-1.5 rounded-full" style={{ width: `${(videos.length / Math.max(totalContent, 1)) * 100}%` }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pending Sales */}
+      {pendingSales > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-6">
+          <div className="flex items-center space-x-2 text-amber-700 mb-2">
+            <HiShoppingCart className="text-lg" />
+            <span className="font-semibold">{pendingSales} pending payment(s)</span>
+          </div>
+          <p className="text-sm text-amber-600">These payments are waiting for Paystack confirmation.</p>
+        </div>
+      )}
+
+      {/* Recent Buyers */}
+      <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-brand-navy">Recent Buyers</h2>
+          <span className="text-xs text-gray-400">{recentBuyers.length} transactions</span>
+        </div>
+        {recentBuyers.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="pb-3 font-semibold text-gray-500">Customer</th>
+                  <th className="pb-3 font-semibold text-gray-500">Item</th>
+                  <th className="pb-3 font-semibold text-gray-500">Amount</th>
+                  <th className="pb-3 font-semibold text-gray-500 hidden sm:table-cell">Date</th>
+                  <th className="pb-3 font-semibold text-gray-500">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentBuyers.map((payment) => (
+                  <tr key={payment._id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                    <td className="py-3 pr-3">
+                      <div>
+                        <p className="font-medium text-brand-navy text-xs sm:text-sm">
+                          {payment.user?.name || 'Unknown'}
+                        </p>
+                        <p className="text-xs text-gray-400">{payment.user?.email || ''}</p>
+                      </div>
+                    </td>
+                    <td className="py-3 pr-3">
+                      <p className="text-xs sm:text-sm capitalize">{payment.itemType}</p>
+                      <p className="text-xs text-gray-400 truncate max-w-[100px] sm:max-w-[150px]">
+                        {payment.metadata?.itemTitle || ''}
+                      </p>
+                    </td>
+                    <td className="py-3 pr-3 font-medium text-brand-navy text-xs sm:text-sm">
+                      KES {payment.amount}
+                    </td>
+                    <td className="py-3 pr-3 text-xs text-gray-400 hidden sm:table-cell">
+                      {new Date(payment.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-3">
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                        payment.status === 'success' ? 'bg-green-50 text-green-700' :
+                        payment.status === 'pending' ? 'bg-yellow-50 text-yellow-700' :
+                        'bg-red-50 text-red-700'
+                      }`}>
+                        {payment.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-400">
+            <HiUsers className="text-4xl mx-auto mb-2" />
+            <p className="text-sm">No sales yet. Share your content to start earning!</p>
+          </div>
+        )}
+      </div>
+
+      {/* User Activity / Visitors */}
+      <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-brand-navy">User Activity</h2>
+          <span className="text-xs text-gray-400">{userActivity?.totalUsers || 0} registered</span>
+        </div>
+
+        {userActivity ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+            <div className="bg-brand-cream rounded-xl p-3 text-center">
+              <p className="text-xl font-bold text-brand-navy">{userActivity.totalUsers}</p>
+              <p className="text-xs text-gray-500">Total Users</p>
+            </div>
+            <div className="bg-green-50 rounded-xl p-3 text-center">
+              <p className="text-xl font-bold text-green-700">{userActivity.verifiedUsers}</p>
+              <p className="text-xs text-gray-500">Verified</p>
+            </div>
+            <div className="bg-amber-50 rounded-xl p-3 text-center">
+              <p className="text-xl font-bold text-amber-700">{userActivity.unverifiedUsers}</p>
+              <p className="text-xs text-gray-500">Unverified</p>
+            </div>
+          </div>
+        ) : null}
+
+        {userActivity?.recentVisitors?.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="pb-3 font-semibold text-gray-500">Name</th>
+                  <th className="pb-3 font-semibold text-gray-500">Email</th>
+                  <th className="pb-3 font-semibold text-gray-500 hidden sm:table-cell">Joined</th>
+                  <th className="pb-3 font-semibold text-gray-500">Last Login</th>
+                  <th className="pb-3 font-semibold text-gray-500">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userActivity.recentVisitors.map((visitor) => (
+                  <tr key={visitor._id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                    <td className="py-2.5 pr-3 font-medium text-brand-navy text-xs sm:text-sm">
+                      {visitor.name}
+                    </td>
+                    <td className="py-2.5 pr-3 text-xs text-gray-500">{visitor.email}</td>
+                    <td className="py-2.5 pr-3 text-xs text-gray-400 hidden sm:table-cell">
+                      {new Date(visitor.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-2.5 pr-3 text-xs text-gray-500">
+                      {visitor.lastLogin
+                        ? new Date(visitor.lastLogin).toLocaleDateString() + ' ' + new Date(visitor.lastLogin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : 'Never'}
+                    </td>
+                    <td className="py-2.5">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        visitor.isVerified ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+                      }`}>
+                        {visitor.isVerified ? 'Verified' : 'Pending'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-6 text-gray-400">
+            <HiUsers className="text-3xl mx-auto mb-2" />
+            <p className="text-sm">No user activity yet.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy">Admin Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600">Manage your Mwiti Bakers platform</p>
+        </div>
+        {activeTab !== 'overview' && (
+          <button
+            onClick={() => { resetForm(); setShowForm(true); }}
+            className="btn-primary flex items-center space-x-2 text-sm"
+          >
+            <HiPlus />
+            <span>Add New</span>
+          </button>
+        )}
       </div>
 
       {message && (
-        <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
+        <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-4 sm:mb-6 flex items-center justify-between text-sm">
           <span>{message}</span>
           <button onClick={() => setMessage('')}><HiX /></button>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
+        <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-4 sm:mb-6 flex items-center justify-between text-sm">
           <span>{error}</span>
           <button onClick={() => setError('')}><HiX /></button>
         </div>
       )}
 
-      {/* Tab Navigation */}
-      <div className="flex space-x-1 bg-white rounded-xl p-1 shadow-sm mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => { setActiveTab(tab.id); resetForm(); }}
-            className={`flex items-center space-x-2 px-5 py-3 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${
-              activeTab === tab.id
-                ? 'bg-brand-navy text-white shadow-md'
-                : 'text-gray-500 hover:text-brand-navy hover:bg-brand-cream'
-            }`}
-          >
-            <tab.icon className="text-lg" />
-            <span>{tab.label}</span>
-            {tab.id === 'images' && images.length > 0 && (
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
-              }`}>
-                {images.length}
-              </span>
-            )}
-            {tab.id === 'recipeBooks' && books.length > 0 && (
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
-              }`}>
-                {books.length}
-              </span>
-            )}
-            {tab.id === 'trainingVideos' && videos.length > 0 && (
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
-              }`}>
-                {videos.length}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Content List */}
-        <div className={`${showForm ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <h2 className="text-xl font-bold text-brand-navy mb-4">
-              {tabs.find((t) => t.id === activeTab)?.label || 'Content'}
-            </h2>
-
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="w-8 h-8 border-4 border-brand-gold border-t-brand-navy rounded-full animate-spin mx-auto"></div>
-              </div>
-            ) : getCurrentItems().length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <p className="text-4xl mb-2">
-                  {activeTab === 'images' ? '🖼️' : activeTab === 'recipeBooks' ? '📚' : '🎬'}
-                </p>
-                <p>No items yet. Click "Add New" to create one.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {getCurrentItems().map((item, i) => renderItemCard(item, i))}
-              </div>
-            )}
-          </div>
+      {/* Tab Navigation - Scrollable on mobile */}
+      <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 mb-6">
+        <div className="flex space-x-1 bg-white rounded-xl p-1 shadow-sm min-w-max sm:min-w-0">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id); resetForm(); }}
+              className={`flex items-center space-x-2 px-3 sm:px-5 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                activeTab === tab.id
+                  ? 'bg-brand-navy text-white shadow-md'
+                  : 'text-gray-500 hover:text-brand-navy hover:bg-brand-cream'
+              }`}
+            >
+              <tab.icon className="text-base sm:text-lg" />
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Add/Edit Form */}
-        {showForm && (
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-md p-6 sticky top-20">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-brand-navy">
-                  {editing ? 'Edit' : 'Add New'}
-                </h2>
-                <button
-                  onClick={resetForm}
-                  className="p-2 rounded-lg hover:bg-brand-cream text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <HiX />
-                </button>
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="w-8 h-8 border-4 border-brand-gold border-t-brand-navy rounded-full animate-spin mx-auto"></div>
+        </div>
+      ) : (
+        <>
+          {activeTab === 'overview' ? (
+            renderOverviewDashboard()
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Content List */}
+              <div className={`${showForm ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+                <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+                  <h2 className="text-lg font-bold text-brand-navy mb-4">
+                    {tabs.find((t) => t.id === activeTab)?.label || 'Content'}
+                  </h2>
+
+                  {getCurrentItems().length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      <p className="text-3xl mb-2">
+                        {activeTab === 'images' ? '🖼️' : activeTab === 'recipeBooks' ? '📚' : '🎬'}
+                      </p>
+                      <p className="text-sm">No items yet. Click "Add New" to create one.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 sm:space-y-3">
+                      {getCurrentItems().map((item, i) => renderItemCard(item, i))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {renderFormFields()}
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="btn-primary flex-1 disabled:opacity-50 flex items-center justify-center"
-                  >
-                    {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="btn-outline flex-1 text-center"
-                  >
-                    Cancel
-                  </button>
+              {/* Add/Edit Form */}
+              {showForm && (
+                <div className="lg:col-span-1">
+                  <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 sticky top-20">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-lg font-bold text-brand-navy">
+                        {editing ? 'Edit' : 'Add New'}
+                      </h2>
+                      <button
+                        onClick={resetForm}
+                        className="p-2 rounded-lg hover:bg-brand-cream text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <HiX />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      {renderFormFields()}
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          type="submit"
+                          disabled={saving}
+                          className="btn-primary flex-1 disabled:opacity-50 flex items-center justify-center text-sm"
+                        >
+                          {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={resetForm}
+                          className="btn-outline flex-1 text-center text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
-              </form>
+              )}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
