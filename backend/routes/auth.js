@@ -210,7 +210,7 @@ router.post(
 
         return res.json({
           autoVerified: true,
-          message: 'Email automatically verified (email service not configured). You can now log in.',
+          message: 'Email automatically verified (unable to send verification email). You can now log in.',
         });
       }
 
@@ -269,7 +269,7 @@ router.post(
             token,
             autoVerified: true,
             message:
-              'Logged in! (Email verification not configured. You are automatically verified.)',
+              'Logged in! (Unable to send verification email. You are automatically verified.)',
             user: {
               id: user._id,
               name: user.name,

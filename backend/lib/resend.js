@@ -10,7 +10,14 @@ const getResend = () => {
 };
 
 const sendVerificationCode = async (email, name, code) => {
-  const client = getResend();
+  let client;
+  try {
+    client = getResend();
+  } catch {
+    // Resend client creation failed (e.g. invalid API key format)
+    console.log(`\n📧 Verification code for ${email}: ${code} (failed to create Resend client)`);
+    return { sent: false };
+  }
 
   // If no Resend client is configured, log the code to console and flag as unsent
   if (!client) {
