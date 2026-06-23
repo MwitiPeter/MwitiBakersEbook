@@ -117,7 +117,9 @@ export default function Gallery() {
                   src={image.previewUrl}
                   alt={image.title}
                   type="image"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                    !purchasedIds.includes(image._id) ? 'blur-lg' : ''
+                  }`}
                 />
                 {!purchasedIds.includes(image._id) && (
                   <div className="absolute inset-0 backdrop-blur-md bg-white/10 flex items-center justify-center">

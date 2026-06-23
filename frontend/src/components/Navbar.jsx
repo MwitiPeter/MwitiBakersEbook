@@ -35,7 +35,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
             <img
-              src="/logo.png"
+              src="/NewLogo.jpg"
               alt="Mwiti Bakers"
               className="h-10 w-auto object-contain"
             />

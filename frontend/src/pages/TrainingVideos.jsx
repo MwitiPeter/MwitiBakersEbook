@@ -113,7 +113,7 @@ export default function TrainingVideos() {
                   alt={video.title}
                   type="video"
                   className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
-                    !purchasedIds.includes(video._id) ? 'blur-md opacity-70' : 'opacity-90'
+                    !purchasedIds.includes(video._id) ? 'blur-lg opacity-60' : 'opacity-90'
                   }`}
                 />
                 {!purchasedIds.includes(video._id) ? (

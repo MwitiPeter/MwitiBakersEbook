@@ -113,7 +113,7 @@ export default function RecipeBooks() {
                   alt={book.title}
                   type="book"
                   className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
-                    !purchasedIds.includes(book._id) ? 'blur-sm' : ''
+                    !purchasedIds.includes(book._id) ? 'blur-lg' : ''
                   }`}
                 />
                 {!purchasedIds.includes(book._id) && (

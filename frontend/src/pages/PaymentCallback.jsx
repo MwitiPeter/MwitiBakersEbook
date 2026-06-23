@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import API from '../api/axios';
 import { HiCheckCircle, HiXCircle } from 'react-icons/hi';
 
 export default function PaymentCallback() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const redirectTimer = useRef(null);
   const reference = searchParams.get('reference');
   const itemType = searchParams.get('itemType');
   const itemId = searchParams.get('itemId');
@@ -46,6 +48,10 @@ export default function PaymentCallback() {
         const { data } = await API.get(`/payments/verify/${reference}`);
         if (data.success) {
           setStatus('success');
+          // Auto-redirect after a brief moment to show success state
+          redirectTimer.current = setTimeout(() => {
+            navigate(getRedirectPath(), { replace: true });
+          }, 1500);
         } else {
           setStatus('error');
         }
@@ -56,7 +62,10 @@ export default function PaymentCallback() {
 
     // Small delay to ensure Paystack has processed
     const timer = setTimeout(verifyPayment, 1500);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    };
   }, [reference]);
 
   return (
@@ -72,13 +81,12 @@ export default function PaymentCallback() {
 
         {status === 'success' && (
           <div>
-            <HiCheckCircle className="text-6xl text-green-500 mx-auto mb-4" />
-            <Link
-              to={getRedirectPath()}
-              className="btn-primary inline-flex items-center justify-center space-x-2 w-full"
-            >
-              <span>{getItemLabel()}</span>
-            </Link>
+            <HiCheckCircle className="text-6xl text-green-500 mx-auto mb-4 animate-bounce" />
+            <h2 className="text-xl font-bold text-green-700 mb-2">Payment Verified!</h2>
+            <p className="text-gray-500 text-sm">Redirecting you to your content...</p>
+            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-4">
+              <div className="bg-green-500 h-1.5 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+            </div>
           </div>
         )}
 

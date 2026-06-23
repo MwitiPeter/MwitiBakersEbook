@@ -11,7 +11,7 @@ export default function Footer() {
           <div>
             <Link to="/" className="inline-block mb-4">
               <img
-                src="/logo.png"
+                src="/NewLogo.jpg"
                 alt="Mwiti Bakers"
                 className="h-14 w-auto object-contain"
               />
@@ -79,7 +79,7 @@ export default function Footer() {
                 title="TikTok"
               >
                 <FaTiktok className="text-lg" />
-                <span>@mwt_bakers</span>
+                <span>@mwiti_bakers</span>
               </a>
               <a
                 href="https://linkedin.com/company/mwiti-bakers"
