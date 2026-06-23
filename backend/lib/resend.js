@@ -12,15 +12,15 @@ const getResend = () => {
 const sendVerificationCode = async (email, name, code) => {
   const client = getResend();
 
-  // If no Resend client is configured, return the code to display in the browser
+  // If no Resend client is configured, throw a clear error
   if (!client) {
-    console.log(`\n========================================`);
-    console.log(`🔐 VERIFICATION CODE for ${email}`);
-    console.log(`   Code: ${code}`);
-    console.log(`   Name: ${name}`);
-    console.log(`   Expires: ${new Date(Date.now() + 30 * 60 * 1000).toLocaleTimeString()}`);
-    console.log(`========================================\n`);
-    return { success: true, devMode: true, code };
+    const errorMsg =
+      'Email service not configured. Please set the RESEND_API_KEY environment variable. ' +
+      'Get a free API key at https://resend.com/api-keys';
+    console.error(`\n⚠️  ${errorMsg}`);
+    console.error(`   Code was NOT sent to ${email} (code: ${code})`);
+    console.error(`   Set RESEND_API_KEY in your .env or Render env vars to enable email delivery.\n`);
+    throw new Error(errorMsg);
   }
 
   try {
@@ -62,17 +62,15 @@ const sendVerificationCode = async (email, name, code) => {
 
     if (error) {
       console.error('Resend email error:', error);
-      // Fall back: return the code for browser display
-      console.log(`⚠️ Resend failed. Verification code for ${email}: ${code}`);
-      return { success: true, devMode: true, code };
+      throw new Error(`Failed to send verification email: ${error.message}`);
     }
 
     return { success: true };
   } catch (err) {
     console.error('Failed to send verification email:', err);
-    // Fall back: return the code for browser display
-    console.log(`⚠️ Email send failed. Verification code for ${email}: ${code}`);
-    return { success: true, devMode: true, code };
+    throw new Error(
+      `Failed to send verification email to ${email}. Please check your RESEND_API_KEY.`
+    );
   }
 };
 

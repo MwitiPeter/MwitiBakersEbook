@@ -1,33 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../api/axios';
-import { HiMail, HiCheckCircle, HiEye, HiEyeOff } from 'react-icons/hi';
+import { HiMail, HiCheckCircle } from 'react-icons/hi';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email') || '';
-  // Check if we have a dev code stored from signup (Resend not configured)
-  const [devCode, setDevCode] = useState('');
-  const [showDevCode, setShowDevCode] = useState(false);
 
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-
-  useEffect(() => {
-    // Read dev code from sessionStorage (set by AuthContext on signup)
-    const stored = sessionStorage.getItem('devCode');
-    if (stored) {
-      setDevCode(stored);
-      // Auto-fill the code inputs for convenience
-      const digits = stored.split('');
-      if (digits.length === 6) {
-        setCode(digits);
-      }
-    }
-  }, []);
 
   const handleCodeChange = (index, value) => {
     if (value.length > 1) return;
@@ -77,9 +61,6 @@ export default function VerifyEmail() {
       });
 
       if (data.verified && data.token) {
-        // Clear dev code from storage
-        sessionStorage.removeItem('devCode');
-        // Auto-login after verification
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         window.location.href = '/dashboard';
@@ -99,17 +80,6 @@ export default function VerifyEmail() {
       const { data } = await API.post('/auth/resend-code', { email });
       setMessage(data.message || 'A new verification code has been sent!');
       setCode(['', '', '', '', '', '']);
-
-      // If dev mode, update the code
-      if (data.devCode) {
-        sessionStorage.setItem('devCode', data.devCode);
-        setDevCode(data.devCode);
-        const digits = data.devCode.split('');
-        if (digits.length === 6) {
-          setCode(digits);
-        }
-      }
-
       document.getElementById('code-0')?.focus();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to resend code');
@@ -125,10 +95,10 @@ export default function VerifyEmail() {
           <div className="w-16 h-16 bg-brand-navy/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <HiMail className="text-3xl text-brand-navy" />
           </div>
-          <h1 className="text-3xl font-bold text-brand-navy mt-2">Verify Your Email</h1>
+          <h1 className="text-3xl font-bold text-brand-navy mt-2">Check Your Email</h1>
           <p className="text-gray-600 mt-2">
-            {devCode ? 'Enter the code below to verify your account' : 'We sent a verification code to'}
-            {!devCode && <><br /><span className="font-semibold text-brand-navy">{email || 'your email'}</span></>}
+            We sent a verification code to<br />
+            <span className="font-semibold text-brand-navy">{email || 'your email'}</span>
           </p>
         </div>
 
@@ -146,34 +116,9 @@ export default function VerifyEmail() {
             </div>
           )}
 
-          {/* Dev mode: Show the code directly */}
-          {devCode && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-medium text-amber-700 uppercase tracking-wider">
-                  ⚡ Email service not configured
-                </p>
-                <button
-                  onClick={() => setShowDevCode(!showDevCode)}
-                  className="text-amber-600 hover:text-amber-800 transition-colors"
-                  title={showDevCode ? 'Hide code' : 'Show code'}
-                >
-                  {showDevCode ? <HiEyeOff className="text-lg" /> : <HiEye className="text-lg" />}
-                </button>
-              </div>
-              <p className="text-xs text-amber-600 mb-3">
-                Resend API key not set. Your verification code is shown below:
-              </p>
-              <div className={`text-center transition-all ${showDevCode ? '' : 'blur-sm select-none'}`}>
-                <span className="text-2xl font-bold tracking-[0.3em] text-brand-navy font-mono">
-                  {devCode}
-                </span>
-              </div>
-              {!showDevCode && (
-                <p className="text-xs text-amber-500 mt-1 text-center">Click the eye icon to reveal</p>
-              )}
-            </div>
-          )}
+          <p className="text-sm text-gray-500 mb-4 text-center">
+            Enter the 6-digit verification code from your email
+          </p>
 
           <form onSubmit={handleSubmit}>
             <div className="flex justify-center gap-2 sm:gap-3 mb-6" onPaste={handlePaste}>
@@ -211,7 +156,7 @@ export default function VerifyEmail() {
               disabled={resending}
               className="text-brand-gold font-medium hover:text-yellow-700 transition-colors text-sm disabled:opacity-50"
             >
-              {resending ? 'Sending...' : devCode ? 'Generate new code' : "Didn't receive the code? Resend"}
+              {resending ? 'Sending...' : "Didn't receive the code? Resend"}
             </button>
 
             <div>
