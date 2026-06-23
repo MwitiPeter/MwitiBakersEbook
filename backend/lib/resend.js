@@ -14,15 +14,20 @@ const sendVerificationCode = async (email, name, code) => {
 
   // If no Resend client is configured, log the code to console and flag as unsent
   if (!client) {
-    console.log(`\n📧 [DEV MODE] Verification code for ${email}: ${code}`);
-    console.log(`   Set RESEND_API_KEY in your .env or Render env vars to enable real email delivery.\n`);
-    return { sent: false, reason: 'RESEND_API_KEY not configured' };
+    console.log(`\n📧 [NO CLIENT] Verification code for ${email}: ${code}`);
+    console.log(`   RESEND_API_KEY is ${process.env.RESEND_API_KEY ? 'SET but client is null' : 'NOT SET'}\n`);
+    return { sent: false, reason: 'RESEND_API_KEY not configured or client creation failed' };
   }
+
+  console.log(`\n📧 [SENDING EMAIL] Attempting to send verification code to ${email}...`);
+  console.log(`   RESEND_API_KEY length: ${process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.length : 0}`);
 
   // If Resend IS configured, try to send the email
   if (process.env.RESEND_API_KEY) {
     try {
       const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+
+      console.log(`   Sending from: Mwiti Bakers <${fromEmail}>`);
 
       const { data, error } = await client.emails.send({
         from: `Mwiti Bakers <${fromEmail}>`,
@@ -58,17 +63,21 @@ const sendVerificationCode = async (email, name, code) => {
       });
 
       if (error) {
-        console.error('Resend email error:', error);
-      } else {
-        return { sent: true };
+        console.error('❌ Resend API returned error:', JSON.stringify(error));
+        return { sent: false, reason: `Resend API error: ${error.message || JSON.stringify(error)}` };
       }
+
+      console.log(`✅ Email sent successfully to ${email}!`);
+      return { sent: true };
     } catch (err) {
-      console.error('Failed to send verification email:', err);
+      console.error('❌ Resend API threw an exception:', err.message);
+      console.error('   Full error:', err);
+      return { sent: false, reason: `Resend exception: ${err.message}` };
     }
   }
 
-  // Log the code to console and flag as not sent
-  console.log(`\n📧 [DEV MODE] Verification code for ${email}: ${code}`);
+  // Should not reach here normally
+  console.log(`📧 [DEV MODE] Verification code for ${email}: ${code}`);
   console.log(`   Set a valid RESEND_API_KEY in Render env vars to enable real email delivery.\n`);
   return { sent: false, reason: 'Email sending failed or not configured' };
 };
