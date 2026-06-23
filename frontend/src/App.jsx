@@ -13,7 +13,6 @@ import TrainingVideos from './pages/TrainingVideos';
 import AdminDashboard from './pages/AdminDashboard';
 import PaymentCallback from './pages/PaymentCallback';
 import LoadingScreen from './components/LoadingScreen';
-import WhatsAppButton from './components/WhatsAppButton';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -56,7 +55,6 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 }

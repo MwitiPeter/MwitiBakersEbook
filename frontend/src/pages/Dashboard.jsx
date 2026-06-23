@@ -38,8 +38,8 @@ export default function Dashboard() {
       icon: HiPhotograph,
       path: '/gallery',
       count: stats.images,
-      color: 'from-brand-navy to-brand-navy-dark',
-      bg: 'bg-brand-cream',
+      color: 'from-blue-600 to-blue-800',
+      bg: 'bg-blue-50',
     },
     {
       title: 'Recipe Books',
@@ -47,8 +47,8 @@ export default function Dashboard() {
       icon: HiBookOpen,
       path: '/recipe-books',
       count: stats.recipeBooks,
-      color: 'from-brand-gold to-brand-gold-soft',
-      bg: 'bg-brand-cream',
+      color: 'from-amber-500 to-yellow-700',
+      bg: 'bg-amber-50',
     },
     {
       title: 'Training Videos',
@@ -56,8 +56,8 @@ export default function Dashboard() {
       icon: HiPlay,
       path: '/training-videos',
       count: stats.trainingVideos,
-      color: 'from-brand-midnight to-brand-navy',
-      bg: 'bg-brand-cream',
+      color: 'from-emerald-500 to-emerald-700',
+      bg: 'bg-emerald-50',
     },
   ];
 
@@ -66,9 +66,8 @@ export default function Dashboard() {
       {/* Welcome */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-brand-navy">
-          Welcome back, {user?.name || 'Baker'}!
+          Welcome back, {user?.name || 'Baker'}! 🧁
         </h1>
-        <p className="font-script text-brand-gold text-xl mt-1">Home of Sweetness</p>
         <p className="text-gray-600 mt-1">Here's what's available for you today.</p>
       </div>
 
@@ -110,7 +109,7 @@ export default function Dashboard() {
               >
                 <div className="flex items-center space-x-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white
-                    ${payment.itemType === 'image' ? 'bg-brand-navy' : payment.itemType === 'recipeBook' ? 'bg-brand-gold' : 'bg-brand-navy-dark'}`}>
+                    ${payment.itemType === 'image' ? 'bg-blue-600' : payment.itemType === 'recipeBook' ? 'bg-amber-600' : 'bg-emerald-600'}`}>
                     {payment.itemType === 'image' ? (
                       <HiPhotograph />
                     ) : payment.itemType === 'recipeBook' ? (

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import AuthBrandHeader from '../components/AuthBrandHeader';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -56,7 +55,11 @@ export default function Signup() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <AuthBrandHeader title="Join Mwiti Bakers" subtitle="Create your account and start baking" />
+        <div className="text-center mb-8">
+          <span className="text-4xl">🧁</span>
+          <h1 className="text-3xl font-bold text-brand-navy mt-2">Join Mwiti Bakers</h1>
+          <p className="text-gray-600 mt-1">Create your account and start baking</p>
+        </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-8">
           {error && (
@@ -136,7 +139,7 @@ export default function Signup() {
 
           <p className="text-center mt-6 text-gray-600">
             Already have an account?{' '}
-            <Link to="/login" className="text-brand-gold font-semibold hover:text-brand-navy transition-colors">
+            <Link to="/login" className="text-brand-gold font-semibold hover:text-yellow-700">
               Sign In
             </Link>
           </p>

@@ -158,7 +158,7 @@ export default function RecipeBooks() {
                     <button
                       onClick={(e) => { e.stopPropagation(); handlePurchase(book); }}
                       disabled={purchasing}
-                      className="flex-1 text-xs sm:text-sm bg-brand-gold text-white py-2 rounded-lg font-medium hover:bg-brand-gold-soft transition-colors disabled:opacity-50"
+                      className="flex-1 text-xs sm:text-sm bg-brand-gold text-white py-2 rounded-lg font-medium hover:bg-yellow-700 transition-colors disabled:opacity-50"
                     >
                       Unlock
                     </button>
