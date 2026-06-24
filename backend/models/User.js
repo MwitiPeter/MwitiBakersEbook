@@ -41,7 +41,6 @@ const userSchema = new mongoose.Schema(
       type: Date,
     },
     purchasedItems: {
-      images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Image' }],
       recipeBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'RecipeBook' }],
       trainingVideos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'TrainingVideo' }],
     },

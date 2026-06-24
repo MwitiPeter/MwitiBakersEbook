@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-import { HiArrowRight, HiPhotograph, HiBookOpen, HiPlay } from 'react-icons/hi';
+import { HiArrowRight, HiBookOpen, HiPlay } from 'react-icons/hi';
 
 export default function Home() {
   const { user } = useAuth();
@@ -54,8 +54,8 @@ export default function Home() {
             </h1>
             <p className="text-xl md:text-2xl text-brand-gold font-semibold mb-4">Home of Sweetness</p>
             <p className="text-gray-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-              Discover the art of premium baking through our curated collection of exclusive images,
-              professional recipe books, and expert training videos. Your journey to baking excellence
+              Discover the art of premium baking through our curated collection of
+              professional recipe books and expert training videos. Your journey to baking excellence
               starts here.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -89,26 +89,7 @@ export default function Home() {
             <p className="section-subtitle">Unlock premium baking content at your fingertips</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Gallery */}
-            <div className="card p-8 text-center group">
-              <div className="w-16 h-16 bg-brand-navy/5 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-brand-navy/10 transition-colors">
-                <HiPhotograph className="text-3xl text-brand-navy" />
-              </div>
-              <h3 className="text-xl font-bold text-brand-navy mb-3">Image Gallery</h3>
-              <p className="text-gray-600 mb-6">
-                Browse our collection of high-quality baking and pastry images. Perfect for
-                inspiration, social media, or culinary projects.
-              </p>
-              <Link
-                to={user ? '/gallery' : '/signup'}
-                className="text-brand-gold font-semibold hover:text-yellow-700 transition-colors inline-flex items-center space-x-1"
-              >
-                <span>Explore Gallery</span>
-                <HiArrowRight className="text-sm" />
-              </Link>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Recipe Books */}
             <div className="card p-8 text-center group">
               <div className="w-16 h-16 bg-brand-navy/5 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-brand-navy/10 transition-colors">
@@ -165,7 +146,7 @@ export default function Home() {
               </p>
               <p className="text-gray-600 leading-relaxed mb-6">
                 Our platform connects baking enthusiasts with professional-grade content —
-                from stunning food photography to comprehensive recipe books and in-depth
+                from comprehensive recipe books to in-depth
                 video training. Every piece of content is curated to help you elevate your
                 baking skills.
               </p>
@@ -185,8 +166,8 @@ export default function Home() {
                 <div className="text-8xl text-center mb-4">🥖</div>
                 <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
                   <p className="text-gray-600 leading-relaxed">
-                    We are building Africa's leading digital bakery content platform — with curated images,
-                    professional recipe books, and expert training videos for baking enthusiasts at every level.
+                    We are building Africa's leading digital bakery content platform — with curated
+                    recipe books and expert training videos for baking enthusiasts at every level.
                   </p>
                 </div>
               </div>

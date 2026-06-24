@@ -312,7 +312,6 @@ router.post(
 router.get('/me', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate([
-      { path: 'purchasedItems.images' },
       { path: 'purchasedItems.recipeBooks' },
       { path: 'purchasedItems.trainingVideos' },
     ]);

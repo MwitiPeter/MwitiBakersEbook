@@ -15,7 +15,6 @@ export default function Navbar() {
     { label: 'Home', path: '/' },
     ...(user
       ? [
-          { label: 'Gallery', path: '/gallery' },
           { label: 'Recipe Books', path: '/recipe-books' },
           { label: 'Training Videos', path: '/training-videos' },
         ]

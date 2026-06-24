@@ -15,8 +15,6 @@ export default function PaymentCallback() {
   const getRedirectPath = () => {
     if (itemType && itemId) {
       switch (itemType) {
-        case 'image':
-          return `/gallery?itemId=${itemId}`;
         case 'recipeBook':
           return `/recipe-books?itemId=${itemId}`;
         case 'trainingVideo':
@@ -30,7 +28,6 @@ export default function PaymentCallback() {
 
   const getItemLabel = () => {
     switch (itemType) {
-      case 'image': return 'View Image';
       case 'recipeBook': return 'View Recipe Book';
       case 'trainingVideo': return 'Watch Video';
       default: return 'Go to Dashboard';

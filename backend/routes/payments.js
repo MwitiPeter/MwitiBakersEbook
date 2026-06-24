@@ -3,7 +3,6 @@ const { body, validationResult } = require('express-validator');
 const { auth } = require('../middleware/auth');
 const { initializePayment, verifyPayment } = require('../config/paystack');
 const Payment = require('../models/Payment');
-const Image = require('../models/Image');
 const RecipeBook = require('../models/RecipeBook');
 const TrainingVideo = require('../models/TrainingVideo');
 const User = require('../models/User');
@@ -13,8 +12,6 @@ const router = express.Router();
 // Get the content item based on type
 const getContentItem = async (itemType, itemId) => {
   switch (itemType) {
-    case 'image':
-      return Image.findById(itemId);
     case 'recipeBook':
       return RecipeBook.findById(itemId);
     case 'trainingVideo':
@@ -30,7 +27,7 @@ router.post(
   auth,
   [
     body('itemType')
-      .isIn(['image', 'recipeBook', 'trainingVideo'])
+      .isIn(['recipeBook', 'trainingVideo'])
       .withMessage('Invalid item type'),
     body('itemId').isMongoId().withMessage('Invalid item ID'),
   ],
@@ -45,7 +42,7 @@ router.post(
 
       // Check if already purchased
       const user = await User.findById(req.user._id);
-      const purchasedItems = user.purchasedItems[itemType === 'trainingVideo' ? 'trainingVideos' : itemType === 'recipeBook' ? 'recipeBooks' : 'images'];
+      const purchasedItems = user.purchasedItems[itemType === 'trainingVideo' ? 'trainingVideos' : 'recipeBooks'];
       
       if (purchasedItems.some((id) => id.toString() === itemId)) {
         return res.status(400).json({ message: 'You already own this item' });
@@ -119,20 +116,14 @@ router.get('/verify/:reference', auth, async (req, res) => {
       // Grant access to user
       const user = await User.findById(req.user._id);
       const itemType =
-        payment.itemType === 'trainingVideo'
-          ? 'trainingVideos'
-          : payment.itemType === 'recipeBook'
-          ? 'recipeBooks'
-          : 'images';
+        payment.itemType === 'trainingVideo' ? 'trainingVideos' : 'recipeBooks';
 
       if (!user.purchasedItems[itemType].some((id) => id.toString() === payment.itemId.toString())) {
         user.purchasedItems[itemType].push(payment.itemId);
         await user.save();
 
-        // Increment download count for images and recipe books
-        if (payment.itemType === 'image') {
-          await Image.findByIdAndUpdate(payment.itemId, { $inc: { downloadCount: 1 } });
-        } else if (payment.itemType === 'recipeBook') {
+        // Increment download count
+        if (payment.itemType === 'recipeBook') {
           await RecipeBook.findByIdAndUpdate(payment.itemId, { $inc: { downloadCount: 1 } });
         }
       }
@@ -173,19 +164,13 @@ router.post('/webhook', async (req, res) => {
       // Grant access
       const user = await User.findById(payment.user);
       const itemType =
-        payment.itemType === 'trainingVideo'
-          ? 'trainingVideos'
-          : payment.itemType === 'recipeBook'
-          ? 'recipeBooks'
-          : 'images';
+        payment.itemType === 'trainingVideo' ? 'trainingVideos' : 'recipeBooks';
 
       if (!user.purchasedItems[itemType].some((id) => id.toString() === payment.itemId.toString())) {
         user.purchasedItems[itemType].push(payment.itemId);
         await user.save();
 
-        if (payment.itemType === 'image') {
-          await Image.findByIdAndUpdate(payment.itemId, { $inc: { downloadCount: 1 } });
-        } else if (payment.itemType === 'recipeBook') {
+        if (payment.itemType === 'recipeBook') {
           await RecipeBook.findByIdAndUpdate(payment.itemId, { $inc: { downloadCount: 1 } });
         }
       }

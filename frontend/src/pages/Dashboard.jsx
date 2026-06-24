@@ -1,33 +1,30 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { HiPhotograph, HiBookOpen, HiPlay, HiArrowRight, HiExternalLink } from 'react-icons/hi';
+import { HiBookOpen, HiPlay, HiArrowRight, HiExternalLink } from 'react-icons/hi';
 import { useState, useEffect } from 'react';
 import API from '../api/axios';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ images: 0, recipeBooks: 0, trainingVideos: 0 });
-  const [purchasedItems, setPurchasedItems] = useState({ images: [], recipeBooks: [], trainingVideos: [] });
+  const [stats, setStats] = useState({ recipeBooks: 0, trainingVideos: 0 });
+  const [purchasedItems, setPurchasedItems] = useState({ recipeBooks: [], trainingVideos: [] });
   const [recentPurchases, setRecentPurchases] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [imagesRes, booksRes, videosRes, paymentsRes, userRes] = await Promise.all([
-          API.get('/images'),
+        const [booksRes, videosRes, paymentsRes, userRes] = await Promise.all([
           API.get('/recipe-books'),
           API.get('/training-videos'),
           API.get('/payments/history'),
           API.get('/auth/me'),
         ]);
 
-        const allImages = imagesRes.data;
         const allBooks = booksRes.data;
         const allVideos = videosRes.data;
         const purchasedIds = userRes.data.purchasedItems;
 
         setStats({
-          images: allImages.length,
           recipeBooks: allBooks.length,
           trainingVideos: allVideos.length,
         });
@@ -35,7 +32,6 @@ export default function Dashboard() {
         // Filter purchased items with full data
         if (purchasedIds) {
           setPurchasedItems({
-            images: allImages.filter((img) => purchasedIds.images?.some((id) => id._id === img._id || id === img._id)),
             recipeBooks: allBooks.filter((book) => purchasedIds.recipeBooks?.some((id) => id._id === book._id || id === book._id)),
             trainingVideos: allVideos.filter((video) => purchasedIds.trainingVideos?.some((id) => id._id === video._id || id === video._id)),
           });
@@ -52,16 +48,6 @@ export default function Dashboard() {
   const getPurchasedCount = (type) => purchasedItems[type]?.length || 0;
 
   const sections = [
-    {
-      title: 'Image Gallery',
-      description: 'Browse and download premium baking images',
-      icon: HiPhotograph,
-      path: '/gallery',
-      total: stats.images,
-      purchased: getPurchasedCount('images'),
-      color: 'from-blue-600 to-blue-800',
-      bg: 'bg-blue-50',
-    },
     {
       title: 'Recipe Books',
       description: 'Unlock professional recipe books in PDF format',
@@ -84,11 +70,10 @@ export default function Dashboard() {
     },
   ];
 
-  const hasPurchases = purchasedItems.images.length > 0 || purchasedItems.recipeBooks.length > 0 || purchasedItems.trainingVideos.length > 0;
+  const hasPurchases = purchasedItems.recipeBooks.length > 0 || purchasedItems.trainingVideos.length > 0;
 
   const getItemLink = (type, id) => {
     switch (type) {
-      case 'images': return `/gallery?itemId=${id}`;
       case 'recipeBooks': return `/recipe-books?itemId=${id}`;
       case 'trainingVideos': return `/training-videos?itemId=${id}`;
       default: return '/dashboard';
@@ -97,7 +82,6 @@ export default function Dashboard() {
 
   const getItemTypeIcon = (type) => {
     switch (type) {
-      case 'images': return { icon: HiPhotograph, color: 'bg-blue-600' };
       case 'recipeBooks': return { icon: HiBookOpen, color: 'bg-amber-600' };
       case 'trainingVideos': return { icon: HiPlay, color: 'bg-emerald-600' };
       default: return { icon: HiPlay, color: 'bg-gray-600' };
@@ -122,7 +106,7 @@ export default function Dashboard() {
       </div>
 
       {/* Section Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-3xl mx-auto">
         {sections.map((section) => (
           <Link
             key={section.path}
@@ -160,29 +144,6 @@ export default function Dashboard() {
           <h2 className="text-xl font-bold text-brand-navy mb-6">My Purchased Items</h2>
 
           <div className="space-y-3">
-            {/* Purchased Images */}
-            {purchasedItems.images.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-blue-700 uppercase tracking-wider mb-2 flex items-center space-x-2">
-                  <HiPhotograph className="text-lg" />
-                  <span>Images ({purchasedItems.images.length})</span>
-                </h3>
-                <div className="space-y-1">
-                  {purchasedItems.images.map((item) => (
-                    <Link
-                      key={item._id}
-                      to={getItemLink('images', item._id)}
-                      className="flex items-center space-x-2 py-2 px-3 rounded-lg text-sm text-gray-700 hover:text-blue-700 hover:bg-blue-50 transition-all group"
-                    >
-                      <HiPhotograph className="text-blue-500 text-base shrink-0" />
-                      <span className="truncate group-hover:underline">{item.title}</span>
-                      <HiExternalLink className="text-gray-400 text-xs shrink-0 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Purchased Recipe Books */}
             {purchasedItems.recipeBooks.length > 0 && (
               <div>
@@ -239,11 +200,9 @@ export default function Dashboard() {
           <div className="space-y-2">
             {recentPurchases.map((payment) => {
               const typeInfo = getItemTypeIcon(
-                payment.itemType === 'image' ? 'images' :
                 payment.itemType === 'recipeBook' ? 'recipeBooks' : 'trainingVideos'
               );
               const itemLink = getItemLink(
-                payment.itemType === 'image' ? 'images' :
                 payment.itemType === 'recipeBook' ? 'recipeBooks' : 'trainingVideos',
                 payment.itemId
               );
@@ -283,7 +242,7 @@ export default function Dashboard() {
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-400 mb-4">No purchases yet</p>
-            <Link to="/gallery" className="btn-primary text-sm">
+            <Link to="/recipe-books" className="btn-primary text-sm">
               Start Exploring
             </Link>
           </div>

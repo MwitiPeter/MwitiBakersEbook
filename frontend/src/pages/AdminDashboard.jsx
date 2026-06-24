@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from '../api/axios';
 import {
-  HiPhotograph,
   HiBookOpen,
   HiPlay,
   HiPlus,
@@ -18,7 +17,6 @@ import {
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [images, setImages] = useState([]);
   const [books, setBooks] = useState([]);
   const [videos, setVideos] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -33,7 +31,6 @@ export default function AdminDashboard() {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: HiTrendingUp },
-    { id: 'images', label: 'Images', icon: HiPhotograph },
     { id: 'recipeBooks', label: 'Recipe Books', icon: HiBookOpen },
     { id: 'trainingVideos', label: 'Training Videos', icon: HiPlay },
   ];
@@ -45,14 +42,12 @@ export default function AdminDashboard() {
   const fetchAllContent = async () => {
     setLoading(true);
     try {
-      const [imgRes, bookRes, vidRes, payRes, usersRes] = await Promise.all([
-        API.get('/images/admin/all'),
+      const [bookRes, vidRes, payRes, usersRes] = await Promise.all([
         API.get('/recipe-books/admin/all'),
         API.get('/training-videos/admin/all'),
         API.get('/payments/admin/all'),
         API.get('/auth/admin/users'),
       ]);
-      setImages(imgRes.data);
       setBooks(bookRes.data);
       setVideos(vidRes.data);
       setPayments(payRes.data);
@@ -75,8 +70,8 @@ export default function AdminDashboard() {
 
   const totalSales = payments.filter((p) => p.status === 'success').length;
   const pendingSales = payments.filter((p) => p.status === 'pending').length;
-  const totalContent = images.length + books.length + videos.length;
-  const visibleContent = [images, books, videos].flat().filter((i) => i.isVisible !== false).length;
+  const totalContent = books.length + videos.length;
+  const visibleContent = [books, videos].flat().filter((i) => i.isVisible !== false).length;
 
   const recentBuyers = [...payments]
     .filter((p) => p.status === 'success')
@@ -120,10 +115,9 @@ export default function AdminDashboard() {
 
   const getEndpoint = (type) => {
     switch (type) {
-      case 'images': return 'images';
       case 'recipeBooks': return 'recipe-books';
       case 'trainingVideos': return 'training-videos';
-      default: return 'images';
+      default: return 'recipe-books';
     }
   };
 
@@ -161,13 +155,6 @@ export default function AdminDashboard() {
 
   const renderFormFields = () => {
     const fields = {
-      images: [
-        { name: 'title', label: 'Title', type: 'text', required: true },
-        { name: 'description', label: 'Description', type: 'textarea' },
-        { name: 'price', label: 'Price (KES)', type: 'number', required: true },
-        { name: 'previewUrl', label: 'Preview Image URL', type: 'url', required: true },
-        { name: 'fullUrl', label: 'Full Image URL', type: 'url', required: true },
-      ],
       recipeBooks: [
         { name: 'title', label: 'Title', type: 'text', required: true },
         { name: 'description', label: 'Description', type: 'textarea' },
@@ -255,7 +242,6 @@ export default function AdminDashboard() {
 
   const getCurrentItems = () => {
     switch (activeTab) {
-      case 'images': return images;
       case 'recipeBooks': return books;
       case 'trainingVideos': return videos;
       default: return [];
@@ -301,7 +287,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-              <HiPhotograph className="text-xl text-amber-600" />
+              <HiBookOpen className="text-xl text-amber-600" />
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-bold text-brand-navy">{totalContent}</p>
@@ -310,21 +296,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Content Breakdown */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <HiPhotograph className="text-lg text-blue-600" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-brand-navy">{images.length}</p>
-              <p className="text-xs text-gray-500">Images</p>
-            </div>
-          </div>
-          <div className="w-full bg-gray-100 rounded-full h-1.5">
-            <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${(images.length / Math.max(totalContent, 1)) * 100}%` }}></div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
         <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
           <div className="flex items-center space-x-3 mb-3">
             <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
@@ -585,7 +557,7 @@ export default function AdminDashboard() {
                   {getCurrentItems().length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
                       <p className="text-3xl mb-2">
-                        {activeTab === 'images' ? '🖼️' : activeTab === 'recipeBooks' ? '📚' : '🎬'}
+                        {activeTab === 'recipeBooks' ? '📚' : '🎬'}
                       </p>
                       <p className="text-sm">No items yet. Click "Add New" to create one.</p>
                     </div>

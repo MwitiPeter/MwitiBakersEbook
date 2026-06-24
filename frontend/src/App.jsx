@@ -11,7 +11,6 @@ const Login = lazy(() => import('./pages/Login'));
 const Signup = lazy(() => import('./pages/Signup'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Gallery = lazy(() => import('./pages/Gallery'));
 const RecipeBooks = lazy(() => import('./pages/RecipeBooks'));
 const TrainingVideos = lazy(() => import('./pages/TrainingVideos'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -50,7 +49,6 @@ export default function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/gallery" element={<ProtectedRoute><Gallery /></ProtectedRoute>} />
           <Route path="/recipe-books" element={<ProtectedRoute><RecipeBooks /></ProtectedRoute>} />
           <Route path="/training-videos" element={<ProtectedRoute><TrainingVideos /></ProtectedRoute>} />
           <Route path="/admin/*" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

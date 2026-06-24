@@ -27,7 +27,7 @@ const paymentSchema = new mongoose.Schema(
     },
     itemType: {
       type: String,
-      enum: ['image', 'recipeBook', 'trainingVideo'],
+      enum: ['recipeBook', 'trainingVideo'],
       required: true,
     },
     itemId: {

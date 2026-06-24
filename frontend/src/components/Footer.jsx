@@ -18,7 +18,7 @@ export default function Footer() {
             </Link>
             <p className="text-gray-300 text-sm leading-relaxed">
               Premium digital bakery content platform. Unlock the sweetness of professional baking
-              with our curated collection of images, recipe books, and training videos.
+              with our curated collection of recipe books and training videos.
             </p>
           </div>
 
@@ -28,9 +28,6 @@ export default function Footer() {
             <div className="space-y-2">
               <Link to="/" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 Home
-              </Link>
-              <Link to="/gallery" className="block text-gray-300 hover:text-white text-sm transition-colors">
-                Gallery
               </Link>
               <Link to="/recipe-books" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 Recipe Books
