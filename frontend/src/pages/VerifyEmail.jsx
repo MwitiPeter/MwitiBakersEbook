@@ -93,7 +93,7 @@ export default function VerifyEmail() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img
-            src="/logo.png"
+            src="/New.jpg"
             alt="Mwiti Bakers"
             className="h-16 sm:h-20 w-auto mx-auto mb-4 object-contain"
           />
@@ -121,6 +121,9 @@ export default function VerifyEmail() {
           <p className="text-sm text-gray-500 mb-4 text-center">
             Enter the 6-digit verification code from your email
           </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-xs text-amber-700">
+            💡 <strong>Tip:</strong> If you don't see the code in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
+          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="flex justify-center gap-2 sm:gap-3 mb-6" onPaste={handlePaste}>

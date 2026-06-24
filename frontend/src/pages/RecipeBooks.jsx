@@ -83,7 +83,7 @@ export default function RecipeBooks() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div className="text-center mb-8 sm:mb-10">
         <img
-          src="/logo.png"
+          src="/New.jpg"
           alt="Mwiti Bakers"
           className="h-14 sm:h-16 w-auto mx-auto mb-4 object-contain"
         />

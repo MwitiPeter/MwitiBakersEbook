@@ -1,18 +1,21 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import VerifyEmail from './pages/VerifyEmail';
-import Dashboard from './pages/Dashboard';
-import Gallery from './pages/Gallery';
-import RecipeBooks from './pages/RecipeBooks';
-import TrainingVideos from './pages/TrainingVideos';
-import AdminDashboard from './pages/AdminDashboard';
-import PaymentCallback from './pages/PaymentCallback';
 import LoadingScreen from './components/LoadingScreen';
+
+// Lazy-loaded pages for faster initial load
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/Login'));
+const Signup = lazy(() => import('./pages/Signup'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Gallery = lazy(() => import('./pages/Gallery'));
+const RecipeBooks = lazy(() => import('./pages/RecipeBooks'));
+const TrainingVideos = lazy(() => import('./pages/TrainingVideos'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -40,6 +43,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
+        <Suspense fallback={<LoadingScreen />}>
         <Routes>
           <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
           <Route path="/login" element={<Login />} />
@@ -53,6 +57,7 @@ export default function App() {
           <Route path="/payment/callback" element={<ProtectedRoute><PaymentCallback /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        </Suspense>
       </main>
       <Footer />
     </div>

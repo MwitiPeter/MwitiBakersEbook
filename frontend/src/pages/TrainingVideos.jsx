@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import API from '../api/axios';
 import ImageWithFallback from '../components/ImageWithFallback';
-import { HiLockClosed, HiPlay, HiX, HiClock } from 'react-icons/hi';
+import { HiLockClosed, HiPlay, HiX, HiClock, HiExclamationCircle } from 'react-icons/hi';
 
 export default function TrainingVideos() {
   const [searchParams] = useSearchParams();
@@ -14,6 +14,8 @@ export default function TrainingVideos() {
   const [purchasing, setPurchasing] = useState(false);
   const [purchasedIds, setPurchasedIds] = useState([]);
   const [error, setError] = useState('');
+  const [videoError, setVideoError] = useState('');
+  const videoRef = useRef(null);
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -83,7 +85,7 @@ export default function TrainingVideos() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div className="text-center mb-8 sm:mb-10">
         <img
-          src="/logo.png"
+          src="/New.jpg"
           alt="Mwiti Bakers"
           className="h-14 sm:h-16 w-auto mx-auto mb-4 object-contain"
         />
@@ -206,14 +208,40 @@ export default function TrainingVideos() {
                     </button>
                   </div>
                 </div>
+              ) : videoError ? (
+                <div className="aspect-video bg-gray-800 flex items-center justify-center">
+                  <div className="text-center px-4">
+                    <HiExclamationCircle className="text-4xl sm:text-5xl text-red-400 mb-4 mx-auto" />
+                    <p className="text-white text-lg font-semibold mb-2">Video Playback Error</p>
+                    <p className="text-gray-400 text-sm mb-4 max-w-md">
+                      This video could not be streamed. The link may be from a provider that doesn't allow direct embedding (e.g. Google Drive, Dropbox).
+                    </p>
+                    <p className="text-gray-400 text-xs mb-4">
+                      Try opening the video directly instead:
+                    </p>
+                    <a
+                      href={selectedVideo.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-gold text-sm inline-flex items-center space-x-2"
+                    >
+                      <HiPlay className="text-lg" />
+                      <span>Open Video in New Tab</span>
+                    </a>
+                  </div>
+                </div>
               ) : (
                 <div className="aspect-video bg-black">
                   <video
+                    ref={videoRef}
                     className="w-full h-full"
                     controls
                     autoPlay
-                    src={selectedVideo.videoUrl}
+                    onError={() => setVideoError('This video format is not supported or the URL is invalid.')}
                   >
+                    <source src={selectedVideo.videoUrl} type="video/mp4" />
+                    <source src={selectedVideo.videoUrl} type="video/webm" />
+                    <source src={selectedVideo.videoUrl} type="video/ogg" />
                     Your browser does not support the video tag.
                   </video>
                 </div>

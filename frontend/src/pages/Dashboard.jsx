@@ -109,7 +109,7 @@ export default function Dashboard() {
       {/* Welcome */}
       <div className="mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
         <img
-          src="/logo.png"
+          src="/New.jpg"
           alt="Mwiti Bakers"
           className="h-14 sm:h-16 w-auto object-contain flex-shrink-0"
         />

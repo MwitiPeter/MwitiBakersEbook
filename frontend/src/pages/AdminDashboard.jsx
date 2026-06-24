@@ -511,7 +511,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
         <div className="flex items-center gap-3 sm:gap-4">
           <img
-            src="/logo.png"
+            src="/New.jpg"
             alt="Mwiti Bakers"
             className="h-12 sm:h-14 w-auto object-contain flex-shrink-0"
           />

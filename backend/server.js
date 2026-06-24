@@ -49,6 +49,7 @@ app.use('/api/images', require('./routes/images'));
 app.use('/api/recipe-books', require('./routes/recipeBooks'));
 app.use('/api/training-videos', require('./routes/trainingVideos'));
 app.use('/api/payments', require('./routes/payments'));
+app.use('/api/contact', require('./routes/contact'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

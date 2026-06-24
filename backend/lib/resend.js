@@ -55,6 +55,10 @@ const sendVerificationCode = async (email, name, code) => {
             <p style="color: #999; font-size: 12px; line-height: 1.4;">
               This code expires in 30 minutes. If you didn't create an account, you can safely ignore this email.
             </p>
+            <div style="background: #fef3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin-top: 16px; font-size: 12px; color: #856404;">
+              <strong>📌 Didn't receive the code?</strong> Please check your <strong>Spam</strong> or <strong>Promotions</strong> folder
+              and mark us as "Not Spam" to ensure future emails reach your inbox.
+            </div>
           </div>
           <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
             &copy; ${new Date().getFullYear()} Mwiti Bakers. All rights reserved.

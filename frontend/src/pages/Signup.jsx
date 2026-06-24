@@ -57,7 +57,7 @@ export default function Signup() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img
-            src="/logo.png"
+            src="/New.jpg"
             alt="Mwiti Bakers"
             className="h-16 sm:h-20 w-auto mx-auto mb-4 object-contain"
           />

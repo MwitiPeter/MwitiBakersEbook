@@ -72,7 +72,7 @@ export default function PaymentCallback() {
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
         <img
-          src="/logo.png"
+          src="/New.jpg"
           alt="Mwiti Bakers"
           className="h-14 sm:h-16 w-auto mx-auto mb-6 object-contain"
         />

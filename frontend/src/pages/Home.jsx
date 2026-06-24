@@ -1,9 +1,30 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import API from '../api/axios';
 import { HiArrowRight, HiPhotograph, HiBookOpen, HiPlay } from 'react-icons/hi';
 
 export default function Home() {
   const { user } = useAuth();
+  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+  const [contactSubmitting, setContactSubmitting] = useState(false);
+  const [contactSent, setContactSent] = useState(false);
+  const [contactError, setContactError] = useState('');
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setContactError('');
+    setContactSubmitting(true);
+    try {
+      await API.post('/contact', contactForm);
+      setContactSent(true);
+      setContactForm({ name: '', email: '', message: '' });
+    } catch (err) {
+      setContactError(err.response?.data?.message || 'Failed to send message. Please try again.');
+    } finally {
+      setContactSubmitting(false);
+    }
+  };
 
   return (
     <div>
@@ -20,11 +41,11 @@ export default function Home() {
               <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
               Premium Digital Bakery
             </div>
-            <div className="inline-flex items-center justify-center bg-white/90 rounded-2xl p-3 sm:p-4 mb-6 shadow-lg">
+            <div className="flex justify-center mb-6">
               <img
-                src="/logo.png"
+                src="/New.jpg"
                 alt="Mwiti Bakers"
-                className="h-16 sm:h-20 md:h-24 w-auto object-contain"
+                className="h-20 sm:h-24 md:h-28 w-auto object-contain drop-shadow-lg"
               />
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight">
@@ -182,25 +203,37 @@ export default function Home() {
             <p className="section-subtitle">Have questions? We'd love to hear from you</p>
           </div>
           <div className="max-w-lg mx-auto">
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleContactSubmit}>
               <input
                 type="text"
                 placeholder="Your Name"
                 className="input-field"
+                value={contactForm.name}
+                onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                required
               />
               <input
                 type="email"
                 placeholder="Your Email"
                 className="input-field"
+                value={contactForm.email}
+                onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                required
               />
               <textarea
                 rows="4"
                 placeholder="Your Message"
                 className="input-field resize-none"
+                value={contactForm.message}
+                onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                required
               ></textarea>
-              <button type="submit" className="btn-primary w-full">
-                Send Message
+              <button type="submit" className="btn-primary w-full" disabled={contactSubmitting}>
+                {contactSubmitting ? 'Sending...' : contactSent ? 'Message Sent!' : 'Send Message'}
               </button>
+              {contactError && (
+                <p className="text-red-500 text-sm text-center mt-2">{contactError}</p>
+              )}
             </form>
           </div>
         </div>

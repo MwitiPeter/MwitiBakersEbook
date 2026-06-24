@@ -11,7 +11,7 @@ export default function Footer() {
           <div>
             <Link to="/" className="inline-flex items-center justify-center bg-white/10 rounded-xl p-2 mb-4">
               <img
-                src="/logo.png"
+                src="/New.jpg"
                 alt="Mwiti Bakers"
                 className="h-14 w-auto object-contain"
               />
@@ -45,17 +45,20 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-brand-gold mb-4">Contact Us</h4>
             <div className="space-y-3">
-              <a href="mailto:hello@mwitibakers.com" className="flex items-center space-x-2 text-gray-300 hover:text-white text-sm transition-colors">
+              <a href="mailto:mwitibakers@gmail.com" className="flex items-center space-x-2 text-gray-300 hover:text-white text-sm transition-colors">
                 <HiMail className="text-brand-gold text-lg" />
-                <span>hello@mwitibakers.com</span>
+                <span>mwitibakers@gmail.com</span>
               </a>
               <a href="tel:+254757365203" className="flex items-center space-x-2 text-gray-300 hover:text-white text-sm transition-colors">
                 <HiPhone className="text-brand-gold text-lg" />
                 <span>0757365203</span>
               </a>
-              <div className="flex items-start space-x-2 text-gray-300 text-sm">
-                <HiLocationMarker className="text-brand-gold mt-0.5 text-lg" />
-                <span>Nairobi, Kenya</span>
+              <div className="flex flex-wrap gap-2 text-gray-300 text-sm">
+                <span className="flex items-center space-x-1"><HiLocationMarker className="text-brand-gold text-base" /><span>Embu</span></span>
+                <span className="text-gray-500">·</span>
+                <span className="flex items-center space-x-1"><HiLocationMarker className="text-brand-gold text-base" /><span>Makueni</span></span>
+                <span className="text-gray-500">·</span>
+                <span className="flex items-center space-x-1"><HiLocationMarker className="text-brand-gold text-base" /><span>Nairobi</span></span>
               </div>
             </div>
 
