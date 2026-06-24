@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import API from '../api/axios';
 import ImageWithFallback from '../components/ImageWithFallback';
+import SEO from '../components/SEO';
 import { HiLockClosed, HiPlay, HiX, HiClock, HiExclamationCircle } from 'react-icons/hi';
 
 export default function TrainingVideos() {
@@ -82,12 +83,20 @@ export default function TrainingVideos() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <>
+      <SEO
+        title="Training Videos"
+        description="Stream expert baking tutorials and masterclasses from Mwiti Bakers. Learn professional baking techniques at your own pace."
+        url="https://mwitibakers.com/training-videos"
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div className="text-center mb-8 sm:mb-10">
         <img
           src="/New.jpg"
-          alt="Mwiti Bakers"
+          alt="Mwiti Bakers - Premium Baking Content Logo"
           className="h-14 sm:h-16 w-auto mx-auto mb-4 object-contain"
+          loading="lazy"
+          decoding="async"
         />
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-navy">Training Videos</h1>
         <p className="text-sm sm:text-base text-gray-600 mt-2 max-w-2xl mx-auto">
@@ -272,5 +281,6 @@ export default function TrainingVideos() {
         </div>
       )}
     </div>
+    </>
   );
 }

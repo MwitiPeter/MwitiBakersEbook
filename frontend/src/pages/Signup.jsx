@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import SEO from '../components/SEO';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -53,13 +54,22 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <>
+      <SEO
+        title="Create Account"
+        description="Create your free Mwiti Bakers account and unlock access to premium baking recipe books and expert training videos."
+        url="https://mwitibakers.com/signup"
+        noindex
+      />
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img
             src="/New.jpg"
-            alt="Mwiti Bakers"
+            alt="Mwiti Bakers - Premium Baking Content Logo"
             className="h-16 sm:h-20 w-auto mx-auto mb-4 object-contain"
+            loading="lazy"
+            decoding="async"
           />
           <h1 className="text-3xl font-bold text-brand-navy mt-2">Join Mwiti Bakers</h1>
           <p className="text-gray-600 mt-1">Create your account and start baking</p>
@@ -150,5 +160,6 @@ export default function Signup() {
         </div>
       </div>
     </div>
+    </>
   );
 }

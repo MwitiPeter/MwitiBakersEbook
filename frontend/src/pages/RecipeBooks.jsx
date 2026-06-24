@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import API from '../api/axios';
 import ImageWithFallback from '../components/ImageWithFallback';
+import SEO from '../components/SEO';
 import { HiLockClosed, HiDownload, HiEye, HiX, HiBookOpen } from 'react-icons/hi';
 
 export default function RecipeBooks() {
@@ -80,12 +81,20 @@ export default function RecipeBooks() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <>
+      <SEO
+        title="Recipe Books"
+        description="Browse and download professional baking recipe books from Mwiti Bakers. Expert techniques, detailed instructions, and premium baking content."
+        url="https://mwitibakers.com/recipe-books"
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div className="text-center mb-8 sm:mb-10">
         <img
           src="/New.jpg"
-          alt="Mwiti Bakers"
+          alt="Mwiti Bakers - Premium Baking Content Logo"
           className="h-14 sm:h-16 w-auto mx-auto mb-4 object-contain"
+          loading="lazy"
+          decoding="async"
         />
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-navy">Recipe Books</h1>
         <p className="text-sm sm:text-base text-gray-600 mt-2 max-w-2xl mx-auto">
@@ -247,5 +256,6 @@ export default function RecipeBooks() {
         </div>
       )}
     </div>
+    </>
   );
 }

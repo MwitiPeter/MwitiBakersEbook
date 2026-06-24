@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -39,6 +40,7 @@ function PublicRoute({ children }) {
 
 export default function App() {
   return (
+    <HelmetProvider>
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
@@ -59,5 +61,6 @@ export default function App() {
       </main>
       <Footer />
     </div>
+    </HelmetProvider>
   );
 }

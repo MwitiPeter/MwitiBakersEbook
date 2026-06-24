@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import API from '../api/axios';
+import SEO from '../components/SEO';
 import { HiCheckCircle, HiXCircle } from 'react-icons/hi';
 
 export default function PaymentCallback() {
@@ -66,12 +67,16 @@ export default function PaymentCallback() {
   }, [reference]);
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4">
+    <>
+      <SEO title="Payment Confirmation" noindex />
+      <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
         <img
           src="/New.jpg"
-          alt="Mwiti Bakers"
+          alt="Mwiti Bakers - Premium Baking Content Logo"
           className="h-14 sm:h-16 w-auto mx-auto mb-6 object-contain"
+          loading="lazy"
+          decoding="async"
         />
         {status === 'verifying' && (
           <div>
@@ -117,5 +122,6 @@ export default function PaymentCallback() {
         )}
       </div>
     </div>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
+import SEO from '../components/SEO';
 import { HiArrowRight, HiBookOpen, HiPlay } from 'react-icons/hi';
 
 export default function Home() {
@@ -27,7 +28,13 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <>
+      <SEO
+        title="Home"
+        description="Discover the art of premium baking with Mwiti Bakers. Access professional recipe books and expert training videos. Start your baking journey today!"
+        url="https://mwitibakers.com/"
+      />
+      <div>
       {/* Hero Section */}
       <section className="relative bg-brand-navy overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -44,8 +51,10 @@ export default function Home() {
             <div className="flex justify-center mb-6">
               <img
                 src="/New.jpg"
-                alt="Mwiti Bakers"
+                alt="Mwiti Bakers - Home of Sweetness - Premium Digital Bakery Logo"
                 className="h-20 sm:h-24 md:h-28 w-auto object-contain drop-shadow-lg"
+                loading="eager"
+                decoding="async"
               />
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight">
@@ -238,5 +247,6 @@ export default function Home() {
         </div>
       </section>
     </div>
+    </>
   );
 }

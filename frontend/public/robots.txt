@@ -1,0 +1,10 @@
+# Robots.txt for Mwiti Bakers
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /payment/callback
+Disallow: /dashboard
+Disallow: /verify-email
+
+# Sitemap
+Sitemap: https://mwitibakers.com/sitemap.xml

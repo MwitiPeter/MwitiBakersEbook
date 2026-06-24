@@ -12,8 +12,10 @@ export default function Footer() {
             <Link to="/" className="inline-flex items-center justify-center bg-white/10 rounded-xl p-2 mb-4">
               <img
                 src="/New.jpg"
-                alt="Mwiti Bakers"
+                alt="Mwiti Bakers - Home of Sweetness Logo"
                 className="h-14 w-auto object-contain"
+                loading="lazy"
+                decoding="async"
               />
             </Link>
             <p className="text-gray-300 text-sm leading-relaxed">

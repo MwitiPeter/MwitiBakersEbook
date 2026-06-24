@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../api/axios';
+import SEO from '../components/SEO';
 import { HiCheckCircle } from 'react-icons/hi';
 
 export default function VerifyEmail() {
@@ -89,13 +90,22 @@ export default function VerifyEmail() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <>
+      <SEO
+        title="Verify Email"
+        description="Enter the verification code sent to your email to activate your Mwiti Bakers account."
+        url="https://mwitibakers.com/verify-email"
+        noindex
+      />
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img
             src="/New.jpg"
-            alt="Mwiti Bakers"
+            alt="Mwiti Bakers - Premium Baking Content Logo"
             className="h-16 sm:h-20 w-auto mx-auto mb-4 object-contain"
+            loading="lazy"
+            decoding="async"
           />
           <h1 className="text-3xl font-bold text-brand-navy mt-2">Check Your Email</h1>
           <p className="text-gray-600 mt-2">
@@ -173,5 +183,6 @@ export default function VerifyEmail() {
         </div>
       </div>
     </div>
+    </>
   );
 }

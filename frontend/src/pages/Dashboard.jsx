@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import SEO from '../components/SEO';
 import { HiBookOpen, HiPlay, HiArrowRight, HiExternalLink } from 'react-icons/hi';
 import { useState, useEffect } from 'react';
 import API from '../api/axios';
@@ -89,13 +90,17 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      <SEO title="Dashboard" noindex />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Welcome */}
       <div className="mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
         <img
           src="/New.jpg"
-          alt="Mwiti Bakers"
+          alt="Mwiti Bakers - Premium Baking Content Logo"
           className="h-14 sm:h-16 w-auto object-contain flex-shrink-0"
+          loading="lazy"
+          decoding="async"
         />
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy text-center sm:text-left">
@@ -249,5 +254,6 @@ export default function Dashboard() {
         )}
       </div>
     </div>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from '../api/axios';
+import SEO from '../components/SEO';
 import {
   HiBookOpen,
   HiPlay,
@@ -479,13 +480,17 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <>
+      <SEO title="Admin Dashboard" noindex />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
         <div className="flex items-center gap-3 sm:gap-4">
           <img
             src="/New.jpg"
-            alt="Mwiti Bakers"
+            alt="Mwiti Bakers - Premium Baking Content Logo"
             className="h-12 sm:h-14 w-auto object-contain flex-shrink-0"
+            loading="lazy"
+            decoding="async"
           />
           <div>
             <h1 className="text-xl sm:text-3xl font-bold text-brand-navy">Admin Dashboard</h1>
@@ -612,5 +617,6 @@ export default function AdminDashboard() {
         </>
       )}
     </div>
+    </>
   );
 }
