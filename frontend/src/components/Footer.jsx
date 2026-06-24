@@ -9,11 +9,11 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
           <div>
-            <Link to="/" className="inline-block mb-4">
+            <Link to="/" className="inline-flex items-center justify-center bg-white/10 rounded-xl p-2 mb-4">
               <img
                 src="/logo.png"
                 alt="Mwiti Bakers"
-                className="h-14 w-auto object-contain brightness-0 invert"
+                className="h-14 w-auto object-contain"
               />
             </Link>
             <p className="text-gray-300 text-sm leading-relaxed">

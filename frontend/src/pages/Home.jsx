@@ -20,11 +20,13 @@ export default function Home() {
               <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
               Premium Digital Bakery
             </div>
-            <img
-              src="/logo.png"
-              alt="Mwiti Bakers"
-              className="h-20 sm:h-24 md:h-28 w-auto mx-auto mb-6 brightness-0 invert object-contain"
-            />
+            <div className="inline-flex items-center justify-center bg-white/90 rounded-2xl p-3 sm:p-4 mb-6 shadow-lg">
+              <img
+                src="/logo.png"
+                alt="Mwiti Bakers"
+                className="h-16 sm:h-20 md:h-24 w-auto object-contain"
+              />
+            </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight">
               Welcome to{' '}
               <span className="text-brand-gold">Mwiti Bakers</span>
@@ -160,23 +162,11 @@ export default function Home() {
             <div className="relative">
               <div className="bg-brand-cream rounded-3xl p-8 relative">
                 <div className="text-8xl text-center mb-4">🥖</div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white rounded-2xl p-4 shadow-sm">
-                    <div className="text-3xl font-bold text-brand-navy">500+</div>
-                    <div className="text-sm text-gray-500">Premium Images</div>
-                  </div>
-                  <div className="bg-white rounded-2xl p-4 shadow-sm">
-                    <div className="text-3xl font-bold text-brand-navy">50+</div>
-                    <div className="text-sm text-gray-500">Recipe Books</div>
-                  </div>
-                  <div className="bg-white rounded-2xl p-4 shadow-sm">
-                    <div className="text-3xl font-bold text-brand-navy">200+</div>
-                    <div className="text-sm text-gray-500">Video Tutorials</div>
-                  </div>
-                  <div className="bg-white rounded-2xl p-4 shadow-sm">
-                    <div className="text-3xl font-bold text-brand-navy">10K+</div>
-                    <div className="text-sm text-gray-500">Happy Bakers</div>
-                  </div>
+                <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
+                  <p className="text-gray-600 leading-relaxed">
+                    We are building Africa's leading digital bakery content platform — with curated images,
+                    professional recipe books, and expert training videos for baking enthusiasts at every level.
+                  </p>
                 </div>
               </div>
             </div>
