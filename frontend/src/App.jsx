@@ -16,6 +16,8 @@ const RecipeBooks = lazy(() => import('./pages/RecipeBooks'));
 const TrainingVideos = lazy(() => import('./pages/TrainingVideos'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -50,6 +52,8 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/recipe-books" element={<ProtectedRoute><RecipeBooks /></ProtectedRoute>} />
           <Route path="/training-videos" element={<ProtectedRoute><TrainingVideos /></ProtectedRoute>} />

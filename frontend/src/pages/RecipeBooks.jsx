@@ -148,6 +148,16 @@ export default function RecipeBooks() {
                     {book.pages} pages
                   </div>
                 )}
+                {book.isBestSeller && (
+                  <div className="absolute top-3 left-3">
+                    <div className="bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center space-x-1 shadow-lg">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      <span>Best Seller</span>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="p-3 sm:p-4">
                 <h3 className="font-semibold text-brand-navy text-sm sm:text-base truncate">{book.title}</h3>
@@ -205,6 +215,14 @@ export default function RecipeBooks() {
                 {selectedBook.isLocked && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center px-4">
+                      {selectedBook.isBestSeller && (
+                        <div className="inline-flex items-center space-x-1 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <span>Best Seller</span>
+                        </div>
+                      )}
                       <HiLockClosed className="text-4xl sm:text-5xl text-white mb-2 mx-auto" />
                       <p className="text-white font-semibold text-sm sm:text-base">Unlock to read this recipe book</p>
                     </div>

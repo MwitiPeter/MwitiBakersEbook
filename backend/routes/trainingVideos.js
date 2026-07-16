@@ -21,7 +21,7 @@ router.get('/admin/all', auth, async (req, res) => {
 // Get all visible training videos (public)
 router.get('/', async (req, res) => {
   try {
-    const videos = await TrainingVideo.find({ isVisible: true }).sort('-createdAt');
+    const videos = await TrainingVideo.find({ isVisible: true }).sort('-isBestSeller -createdAt');
     const sanitized = videos.map((video) => ({
       _id: video._id,
       title: video.title,
@@ -30,6 +30,7 @@ router.get('/', async (req, res) => {
       duration: video.duration,
       price: video.price,
       isLocked: true,
+      isBestSeller: video.isBestSeller,
       createdAt: video.createdAt,
     }));
     res.json(sanitized);
@@ -68,6 +69,7 @@ router.get('/:id/unlock', auth, async (req, res) => {
       duration: video.duration,
       price: video.price,
       isLocked: false,
+      isBestSeller: video.isBestSeller,
       viewCount: video.viewCount,
       createdAt: video.createdAt,
     });
@@ -92,6 +94,7 @@ router.get('/:id', async (req, res) => {
       duration: video.duration,
       price: video.price,
       isLocked: true,
+      isBestSeller: video.isBestSeller,
       createdAt: video.createdAt,
     });
   } catch (error) {

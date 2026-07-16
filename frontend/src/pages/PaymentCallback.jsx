@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import API from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 import SEO from '../components/SEO';
 import { HiCheckCircle, HiXCircle } from 'react-icons/hi';
 
 export default function PaymentCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { loadUser } = useAuth();
   const redirectTimer = useRef(null);
   const reference = searchParams.get('reference');
   const itemType = searchParams.get('itemType');
@@ -46,10 +48,12 @@ export default function PaymentCallback() {
         const { data } = await API.get(`/payments/verify/${reference}`);
         if (data.success) {
           setStatus('success');
+          // Refresh user data to update purchased items immediately
+          await loadUser();
           // Auto-redirect after a brief moment to show success state
           redirectTimer.current = setTimeout(() => {
             navigate(getRedirectPath(), { replace: true });
-          }, 1500);
+          }, 1000);
         } else {
           setStatus('error');
         }
@@ -90,7 +94,7 @@ export default function PaymentCallback() {
           <div>
             <HiCheckCircle className="text-6xl text-green-500 mx-auto mb-4 animate-bounce" />
             <h2 className="text-xl font-bold text-green-700 mb-2">Payment Verified!</h2>
-            <p className="text-gray-500 text-sm">Redirecting you to your content...</p>
+            <p className="text-gray-500 text-sm">Your content is now unlocked. Taking you there...</p>
             <div className="w-full bg-gray-200 rounded-full h-1.5 mt-4">
               <div className="bg-green-500 h-1.5 rounded-full animate-pulse" style={{ width: '100%' }}></div>
             </div>
@@ -106,6 +110,10 @@ export default function PaymentCallback() {
               <Link
                 to={getRedirectPath()}
                 className="btn-primary text-center"
+                onClick={async () => {
+                  // Try to refresh user data anyway
+                  try { await loadUser(); } catch {}
+                }}
               >
                 {getItemLabel()}
               </Link>

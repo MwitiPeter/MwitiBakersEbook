@@ -44,8 +44,8 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const signup = async (name, email, password) => {
-    const { data } = await API.post('/auth/signup', { name, email, password });
+  const signup = async (name, email, password, notificationsEnabled = false) => {
+    const { data } = await API.post('/auth/signup', { name, email, password, notificationsEnabled });
 
     // If verification is required, don't auto-login
     if (data.requiresVerification) {

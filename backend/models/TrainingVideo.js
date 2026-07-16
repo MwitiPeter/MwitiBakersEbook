@@ -36,6 +36,10 @@ const trainingVideoSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    isBestSeller: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

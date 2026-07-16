@@ -44,6 +44,18 @@ const userSchema = new mongoose.Schema(
       recipeBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'RecipeBook' }],
       trainingVideos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'TrainingVideo' }],
     },
+    notificationsEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    resetPasswordCode: {
+      type: String,
+      select: false,
+    },
+    resetPasswordCodeExpires: {
+      type: Date,
+      select: false,
+    },
   },
   { timestamps: true }
 );
@@ -64,6 +76,8 @@ userSchema.methods.toJSON = function () {
   delete obj.password;
   delete obj.verificationCode;
   delete obj.verificationCodeExpires;
+  delete obj.resetPasswordCode;
+  delete obj.resetPasswordCodeExpires;
   return obj;
 };
 

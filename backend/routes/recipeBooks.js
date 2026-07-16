@@ -21,7 +21,7 @@ router.get('/admin/all', auth, async (req, res) => {
 // Get all visible recipe books (public)
 router.get('/', async (req, res) => {
   try {
-    const books = await RecipeBook.find({ isVisible: true }).sort('-createdAt');
+    const books = await RecipeBook.find({ isVisible: true }).sort('-isBestSeller -createdAt');
     const sanitized = books.map((book) => ({
       _id: book._id,
       title: book.title,
@@ -30,6 +30,7 @@ router.get('/', async (req, res) => {
       price: book.price,
       pages: book.pages,
       isLocked: true,
+      isBestSeller: book.isBestSeller,
       createdAt: book.createdAt,
     }));
     res.json(sanitized);
@@ -64,6 +65,7 @@ router.get('/:id/unlock', auth, async (req, res) => {
       price: book.price,
       pages: book.pages,
       isLocked: false,
+      isBestSeller: book.isBestSeller,
       downloadCount: book.downloadCount,
       createdAt: book.createdAt,
     });
@@ -88,6 +90,7 @@ router.get('/:id', async (req, res) => {
       price: book.price,
       pages: book.pages,
       isLocked: true,
+      isBestSeller: book.isBestSeller,
       createdAt: book.createdAt,
     });
   } catch (error) {

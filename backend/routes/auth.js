@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
@@ -28,7 +29,7 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { name, email, password } = req.body;
+      const { name, email, password, notificationsEnabled } = req.body;
 
       const existingUser = await User.findOne({ email });
       if (existingUser) {
@@ -69,7 +70,7 @@ router.post(
         });
       }
 
-      const user = await User.create({ name, email, password });
+      const user = await User.create({ name, email, password, notificationsEnabled });
       const code = user.generateVerificationCode();
       await user.save();
 
@@ -322,6 +323,105 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// Request password reset (sends verification code to email)
+router.post(
+  '/forgot-password',
+  [body('email').isEmail().withMessage('Valid email is required')],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { email } = req.body;
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        return res.status(404).json({ message: 'No account found with this email' });
+      }
+
+      // Generate a reset code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      user.resetPasswordCode = crypto.createHash('sha256').update(code).digest('hex');
+      user.resetPasswordCodeExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+      await user.save();
+
+      // Try to send the reset code via email
+      const result = await sendVerificationCode(email, user.name, code);
+
+      if (result && !result.sent) {
+        // If email service isn't configured, return the code in response (dev mode)
+        console.log(`\n🔑 Password reset code for ${email}: ${code} (dev mode)`);
+        return res.json({
+          message: 'Password reset code generated.',
+          email,
+          devCode: code,
+        });
+      }
+
+      res.json({
+        message: 'A password reset code has been sent to your email.',
+        email,
+      });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ message: 'Unable to process request. Please try again later.' });
+    }
+  }
+);
+
+// Verify reset code and reset password
+router.post(
+  '/reset-password',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('code').matches(/^\d{6}$/).withMessage('Verification code must be 6 digits'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { email, code, password } = req.body;
+      const user = await User.findOne({ email }).select('+resetPasswordCode +resetPasswordCodeExpires');
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Check if user is verified
+      if (!user.isVerified) {
+        return res.status(400).json({ message: 'Please verify your email before resetting your password.' });
+      }
+
+      // Verify the reset code
+      const hashedCode = crypto.createHash('sha256').update(code).digest('hex');
+      if (
+        user.resetPasswordCode !== hashedCode ||
+        !user.resetPasswordCodeExpires ||
+        user.resetPasswordCodeExpires < new Date()
+      ) {
+        return res.status(400).json({ message: 'Invalid or expired reset code' });
+      }
+
+      // Update password
+      user.password = password;
+      user.resetPasswordCode = undefined;
+      user.resetPasswordCodeExpires = undefined;
+      await user.save();
+
+      res.json({ message: 'Password reset successfully! You can now log in with your new password.' });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ message: 'Unable to reset password. Please try again later.' });
+    }
+  }
+);
+
 // Admin: Get all users with activity data
 router.get('/admin/users', auth, async (req, res) => {
   try {
@@ -329,7 +429,7 @@ router.get('/admin/users', auth, async (req, res) => {
       return res.status(403).json({ message: 'Admin only' });
     }
 
-    const users = await User.find({}, 'name email role isVerified lastLogin createdAt');
+    const users = await User.find({}, 'name email role isVerified lastLogin createdAt notificationsEnabled');
     const totalUsers = users.length;
     const verifiedUsers = users.filter((u) => u.isVerified).length;
     const recentVisitors = users

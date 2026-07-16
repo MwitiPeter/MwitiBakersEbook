@@ -1,12 +1,19 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import PasswordInput from '../components/PasswordInput';
 import SEO from '../components/SEO';
 
 export default function Signup() {
   const navigate = useNavigate();
   const { signup } = useAuth();
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    notificationsEnabled: false,
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -31,7 +38,7 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      const data = await signup(formData.name, formData.email, formData.password);
+      const data = await signup(formData.name, formData.email, formData.password, formData.notificationsEnabled);
       if (data.requiresVerification) {
         navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
       } else {
@@ -107,29 +114,36 @@ export default function Signup() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="input-field"
-                placeholder="At least 6 characters"
-                required
-                minLength={6}
-              />
-            </div>
+            <PasswordInput
+              id="signup-password"
+              label="Password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="At least 6 characters"
+              required
+              minLength={6}
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <PasswordInput
+              id="signup-confirm-password"
+              label="Confirm Password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              placeholder="Repeat your password"
+              required
+            />
+
+            <div className="flex items-start space-x-3">
               <input
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="input-field"
-                placeholder="Repeat your password"
-                required
+                id="notifications"
+                type="checkbox"
+                checked={formData.notificationsEnabled}
+                onChange={(e) => setFormData({ ...formData, notificationsEnabled: e.target.checked })}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold cursor-pointer"
               />
+              <label htmlFor="notifications" className="text-sm text-gray-600 cursor-pointer select-none">
+                I'd like to receive <span className="font-medium text-brand-navy">email notifications</span> about new recipe books, training videos, and exclusive baking tips.
+              </label>
             </div>
 
             <button
