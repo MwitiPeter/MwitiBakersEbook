@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 import SEO from '../components/SEO';
-import { HiCheckCircle, HiMail, HiClipboardCopy, HiExclamation } from 'react-icons/hi';
+import { HiCheckCircle, HiMail } from 'react-icons/hi';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -10,8 +10,6 @@ export default function ForgotPassword() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showCode, setShowCode] = useState(null);
-  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,14 +24,8 @@ export default function ForgotPassword() {
     setLoading(true);
     try {
       const { data } = await API.post('/auth/forgot-password', { email });
-
-      if (data.devMode && data.code) {
-        // Email service not available — show the code directly on screen
-        setMessage(data.message || 'Your password reset code is shown below.');
-        setShowCode(data.code);
-      } else {
-        navigate(`/reset-password?email=${encodeURIComponent(email)}`);
-      }
+      setMessage(data.message || 'A reset code has been sent to your email.');
+      navigate(`/reset-password?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send reset code. Please try again.');
     } finally {
@@ -70,55 +62,10 @@ export default function ForgotPassword() {
               </div>
             )}
 
-            {message && !showCode && (
+            {message && (
               <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm flex items-center space-x-2">
                 <HiCheckCircle className="text-lg flex-shrink-0" />
                 <span>{message}</span>
-              </div>
-            )}
-
-            {showCode && (
-              <div className="mb-6 space-y-3">
-                <div className="bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 text-sm text-amber-800 flex items-start space-x-2">
-                  <HiExclamation className="text-lg flex-shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Email service unavailable.</strong> Your reset code is shown below. 
-                    Copy it and use it on the next page to reset your password.
-                  </span>
-                </div>
-                <div className="bg-brand-navy/5 rounded-xl p-4 text-center">
-                  <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide font-medium">Your Reset Code</p>
-                  <div className="flex justify-center gap-2">
-                    {showCode.split('').map((digit, i) => (
-                      <span
-                        key={i}
-                        className="w-10 h-12 flex items-center justify-center bg-white border-2 border-brand-gold rounded-lg text-xl font-bold text-brand-navy"
-                      >
-                        {digit}
-                      </span>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(showCode);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }}
-                    className="mt-3 inline-flex items-center space-x-1.5 text-sm text-brand-gold font-medium hover:text-yellow-700 transition-colors"
-                  >
-                    {copied ? (
-                      <><HiCheckCircle className="text-green-600" /><span className="text-green-600">Copied!</span></>
-                    ) : (
-                      <><HiClipboardCopy /><span>Copy code</span></>
-                    )}
-                  </button>
-                </div>
-                <button
-                  onClick={() => navigate(`/reset-password?email=${encodeURIComponent(email)}&code=${showCode}`)}
-                  className="btn-primary w-full flex items-center justify-center"
-                >
-                  Continue to Reset Password
-                </button>
               </div>
             )}
 
@@ -127,7 +74,6 @@ export default function ForgotPassword() {
               <Link to="/signup" className="underline font-medium">create an account</Link> first.
             </div>
 
-            {!showCode && (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
@@ -162,7 +108,6 @@ export default function ForgotPassword() {
                 )}
               </button>
             </form>
-            )}
 
             <div className="text-center mt-6 space-y-2">
               <p className="text-sm text-gray-600">

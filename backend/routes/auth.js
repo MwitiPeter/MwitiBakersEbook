@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
-const { sendVerificationCode } = require('../lib/resend');
+const { sendVerificationCode } = require('../lib/email');
 
 const router = express.Router();
 
@@ -351,15 +351,9 @@ router.post(
       const result = await sendVerificationCode(email, user.name, code, 'reset');
 
       if (result && !result.sent) {
-        // Email service not available — return the code so the frontend can show it directly
-        console.log(`\n🔑 Password reset code for ${email}: ${code} (not sent — email service unavailable, shown on screen)`);
-
-        return res.json({
+        return res.status(503).json({
           message:
-            '⚠️ Email service is not configured. Your password reset code is shown below:',
-          email,
-          code, // The 6-digit code — safe to return since the user already knows the email
-          devMode: true,
+            'Unable to send password reset email at this time. Our email service is temporarily unavailable. Please try again later or contact support.',
         });
       }
 
