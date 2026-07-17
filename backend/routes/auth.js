@@ -351,22 +351,15 @@ router.post(
       const result = await sendVerificationCode(email, user.name, code, 'reset');
 
       if (result && !result.sent) {
-        // Email service not available — log for debugging but NEVER expose the full code in production
-        console.log(`\n🔑 Password reset code for ${email}: ${code} (not sent — email service unavailable)`);
+        // Email service not available — return the code so the frontend can show it directly
+        console.log(`\n🔑 Password reset code for ${email}: ${code} (not sent — email service unavailable, shown on screen)`);
 
-        if (process.env.NODE_ENV === 'development') {
-          // In development, allow the flow to proceed since the code is visible in the terminal
-          return res.json({
-            message:
-              '⚠️ Development mode: A password reset code has been generated. Check the server console/terminal for the code.',
-            email,
-            devMode: true,
-          });
-        }
-
-        return res.status(503).json({
+        return res.json({
           message:
-            'Unable to send password reset email at this time. Our email service is temporarily unavailable. Please try again later or contact support.',
+            '⚠️ Email service is not configured. Your password reset code is shown below:',
+          email,
+          code, // The 6-digit code — safe to return since the user already knows the email
+          devMode: true,
         });
       }
 

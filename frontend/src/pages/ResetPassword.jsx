@@ -3,14 +3,20 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 import PasswordInput from '../components/PasswordInput';
 import SEO from '../components/SEO';
-import { HiCheckCircle } from 'react-icons/hi';
+import { HiCheckCircle, HiExclamation } from 'react-icons/hi';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const email = searchParams.get('email') || '';
+  const codeFromUrl = searchParams.get('code') || '';
 
-  const [code, setCode] = useState(['', '', '', '', '', '']);
+  const [code, setCode] = useState(() => {
+    if (codeFromUrl.length === 6) {
+      return codeFromUrl.split('');
+    }
+    return ['', '', '', '', '', ''];
+  });
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -93,8 +99,15 @@ export default function ResetPassword() {
     setError('');
     try {
       const { data } = await API.post('/auth/forgot-password', { email });
-      setMessage(data.message || 'A new code has been sent to your email!');
-      setCode(['', '', '', '', '', '']);
+
+      if (data.devMode && data.code) {
+        // Email service unavailable — show the code directly
+        setCode(data.code.split(''));
+        setMessage('⚠️ Email service unavailable. A new code has been generated and filled in below.');
+      } else {
+        setMessage(data.message || 'A new code has been sent to your email!');
+        setCode(['', '', '', '', '', '']);
+      }
       document.getElementById('rcode-0')?.focus();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to resend code');
@@ -142,9 +155,19 @@ export default function ResetPassword() {
               </div>
             )}
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-xs text-amber-700">
-              💡 <strong>Tip:</strong> If you don't see the code in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
-            </div>
+            {!codeFromUrl && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-xs text-amber-700">
+                💡 <strong>Tip:</strong> If you don't see the code in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
+              </div>
+            )}
+            {codeFromUrl && (
+              <div className="bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 mb-4 text-sm text-amber-800 flex items-start space-x-2">
+                <HiExclamation className="text-lg flex-shrink-0 mt-0.5" />
+                <span>
+                  <strong>Email service unavailable.</strong> Your reset code has been pre-filled below. Enter your new password to continue.
+                </span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
