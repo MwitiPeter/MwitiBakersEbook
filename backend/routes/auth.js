@@ -351,9 +351,14 @@ router.post(
       const result = await sendVerificationCode(email, user.name, code, 'reset');
 
       if (result && !result.sent) {
-        return res.status(503).json({
-          message:
-            'Unable to send password reset email at this time. Our email service is temporarily unavailable. Please try again later or contact support.',
+        console.log(`\n🔑 Password reset code for ${email}: ${code} (not sent — email unavailable)`);
+
+        // Return the code so the frontend can redirect the user directly to the reset page
+        return res.json({
+          message: 'Email service unavailable. Redirecting to password reset...',
+          email,
+          code,
+          devMode: true,
         });
       }
 

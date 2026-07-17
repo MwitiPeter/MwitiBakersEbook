@@ -17,6 +17,10 @@ const getTransporter = () => {
       user: GMAIL_USER,
       pass: GMAIL_APP_PASSWORD,
     },
+    // Timeout settings to avoid hanging for too long
+    connectionTimeout: 5000,  // 5 seconds to establish connection
+    greetingTimeout: 5000,    // 5 seconds for SMTP greeting
+    socketTimeout: 10000,     // 10 seconds for socket operations
   });
 
   return transporter;
