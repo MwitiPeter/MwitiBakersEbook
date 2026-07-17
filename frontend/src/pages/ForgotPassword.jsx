@@ -25,12 +25,7 @@ export default function ForgotPassword() {
     try {
       const { data } = await API.post('/auth/forgot-password', { email });
       setMessage(data.message || 'A reset code has been sent to your email.');
-      // If dev mode, show the code
-      if (data.devCode) {
-        navigate(`/reset-password?email=${encodeURIComponent(email)}&code=${data.devCode}`);
-      } else {
-        navigate(`/reset-password?email=${encodeURIComponent(email)}`);
-      }
+      navigate(`/reset-password?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send reset code. Please try again.');
     } finally {

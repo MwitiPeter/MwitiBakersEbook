@@ -348,15 +348,14 @@ router.post(
       await user.save();
 
       // Try to send the reset code via email
-      const result = await sendVerificationCode(email, user.name, code);
+      const result = await sendVerificationCode(email, user.name, code, 'reset');
 
       if (result && !result.sent) {
-        // If email service isn't configured, return the code in response (dev mode)
-        console.log(`\n🔑 Password reset code for ${email}: ${code} (dev mode)`);
-        return res.json({
-          message: 'Password reset code generated.',
-          email,
-          devCode: code,
+        // Email service not available — log for debugging but NEVER expose the code to the client
+        console.log(`\n🔑 Password reset code for ${email}: ${code} (not sent to user — email service unavailable)`);
+        return res.status(503).json({
+          message:
+            'Unable to send password reset email at this time. Our email service is temporarily unavailable. Please try again later or contact support.',
         });
       }
 

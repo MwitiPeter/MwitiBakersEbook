@@ -9,9 +9,8 @@ export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const email = searchParams.get('email') || '';
-  const prefillCode = searchParams.get('code') || '';
 
-  const [code, setCode] = useState(prefillCode ? prefillCode.split('') : ['', '', '', '', '', '']);
+  const [code, setCode] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
