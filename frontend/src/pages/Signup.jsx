@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
 import PasswordInput from '../components/PasswordInput';
 import SEO from '../components/SEO';
@@ -9,8 +8,6 @@ import { HiCheckCircle, HiMail, HiExclamation } from 'react-icons/hi';
 export default function Signup() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { signup } = useAuth();
-
   // Step 1: Email verification
   const [email, setEmail] = useState(searchParams.get('email') || '');
   const [pendingToken, setPendingToken] = useState(searchParams.get('token') || '');

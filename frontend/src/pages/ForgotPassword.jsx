@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import API from '../api/axios';
 import SEO from '../components/SEO';
 import { HiCheckCircle, HiMail } from 'react-icons/hi';
 
 export default function ForgotPassword() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [devLink, setDevLink] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +26,12 @@ export default function ForgotPassword() {
     try {
       const { data } = await API.post('/auth/forgot-password', { email });
 
-      setMessage(data.message || 'A password reset link has been sent to your email.');
+      if (data.devMode && data.verificationLink) {
+        setDevLink(data.verificationLink);
+        setMessage(data.message || 'A password reset link is available below:');
+      } else {
+        setMessage(data.message || 'A password reset link has been sent to your email.');
+      }
       setSent(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send reset link. Please try again.');
@@ -57,16 +62,39 @@ export default function ForgotPassword() {
               <h1 className="text-3xl font-bold text-brand-navy mt-2">Check Your Email</h1>
             </div>
             <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-              <div className="text-6xl mb-4">📧</div>
-              <h2 className="text-xl font-bold text-brand-navy mb-2">Reset link sent</h2>
-              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-                We sent a password reset link to <strong>{email}</strong>.
-                Click the link in the email to set a new password.
-                The link expires in <strong>1 hour</strong>.
-              </p>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700 text-left">
-                💡 <strong>Tip:</strong> If you don't see the email in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
-              </div>
+              {devLink ? (
+                <>
+                  <div className="text-6xl mb-4">🔗</div>
+                  <h2 className="text-xl font-bold text-brand-navy mb-2">Reset link available</h2>
+                  <p className="text-gray-500 text-sm mb-4 leading-relaxed">
+                    Click the link below to reset your password:
+                  </p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                    <a
+                      href={devLink}
+                      className="text-brand-navy font-semibold text-sm underline hover:text-brand-gold transition-colors break-all"
+                    >
+                      {devLink}
+                    </a>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-6">
+                    This link expires in <strong>1 hour</strong>.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-6xl mb-4">📧</div>
+                  <h2 className="text-xl font-bold text-brand-navy mb-2">Reset link sent</h2>
+                  <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                    We sent a password reset link to <strong>{email}</strong>.
+                    Click the link in the email to set a new password.
+                    The link expires in <strong>1 hour</strong>.
+                  </p>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700 text-left">
+                    💡 <strong>Tip:</strong> If you don't see the email in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
+                  </div>
+                </>
+              )}
               <button
                 onClick={() => { setSent(false); setMessage(''); }}
                 className="text-brand-gold font-medium hover:text-yellow-700 transition-colors text-sm"

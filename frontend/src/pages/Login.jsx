@@ -9,11 +9,13 @@ export default function Login() {
   const { login } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [devLink, setDevLink] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setDevLink('');
 
     if (!formData.email || !formData.password) {
       setError('Please fill in all fields');
@@ -23,6 +25,11 @@ export default function Login() {
     setLoading(true);
     try {
       const data = await login(formData.email, formData.password);
+      if (data.devMode && data.verificationLink) {
+        setDevLink(data.verificationLink);
+        setError(data.message || 'A verification link is available below. Click it to verify your email.');
+        return;
+      }
       if (data.requiresVerification) {
         navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
         return;
@@ -70,6 +77,18 @@ export default function Login() {
           {error && (
             <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">
               {error}
+            </div>
+          )}
+
+          {devLink && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+              <p className="text-xs text-gray-500 mb-2">Click to verify your email:</p>
+              <a
+                href={devLink}
+                className="text-brand-navy font-semibold text-xs underline hover:text-brand-gold transition-colors break-all"
+              >
+                {devLink}
+              </a>
             </div>
           )}
 

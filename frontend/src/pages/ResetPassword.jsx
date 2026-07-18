@@ -37,8 +37,8 @@ export default function ResetPassword() {
       return;
     }
 
-    if (!newPassword || newPassword.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (!newPassword || newPassword.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -161,9 +161,9 @@ export default function ResetPassword() {
                 label="New Password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="At least 6 characters"
+                placeholder="At least 8 characters"
                 required
-                minLength={6}
+                minLength={8}
               />
 
               <PasswordInput

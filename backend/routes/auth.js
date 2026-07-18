@@ -292,32 +292,33 @@ router.post(
   '/signup',
   [
     body('name').trim().notEmpty().withMessage('Name is required'),
-    body('email').isEmail().withMessage('Valid email is required'),      body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
-      body('password').custom((value) => {
-        const errors = validatePasswordStrength(value);
-        if (errors.length > 0) {
-          throw new Error(errors.join('. '));
-        }
-        return true;
-      }),
-    ],
-    async (req, res) => {
-      try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(400).json({ errors: errors.array() });
-        }
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+    body('password').custom((value) => {
+      const errors = validatePasswordStrength(value);
+      if (errors.length > 0) {
+        throw new Error(errors.join('. '));
+      }
+      return true;
+    }),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-        const { name, email, password, notificationsEnabled } = req.body;
-        const normalizedEmail = email.toLowerCase().trim();
+      const { name, email, password, notificationsEnabled } = req.body;
+      const normalizedEmail = email.toLowerCase().trim();
 
-        // Validate email (MX, disposable, format)
-        const validation = await validateEmail(normalizedEmail);
-        if (!validation.valid) {
-          return res.status(400).json({ message: validation.errors[0] });
-        }
+      // Validate email (MX, disposable, format)
+      const validation = await validateEmail(normalizedEmail);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.errors[0] });
+      }
 
-        const existingUser = await User.findOne({ email: normalizedEmail });
+      const existingUser = await User.findOne({ email: normalizedEmail });
       if (existingUser) {
         if (existingUser.isVerified) {
           return res.status(400).json({ message: 'Email already registered' });
@@ -330,8 +331,11 @@ router.post(
         const result = await sendAuthLink(email, existingUser.name, verificationLink, 'verify');
 
         if (result && !result.sent) {
-          return res.status(503).json({
-            message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
+          return res.json({
+            devMode: true,
+            rawToken,
+            verificationLink,
+            message: 'A verification link is available below.',
           });
         }
 
@@ -350,8 +354,11 @@ router.post(
       const result = await sendAuthLink(normalizedEmail, name, verificationLink, 'verify');
 
       if (result && !result.sent) {
-        return res.status(503).json({
-          message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
+        return res.json({
+          devMode: true,
+          rawToken,
+          verificationLink,
+          message: 'A verification link is available below.',
         });
       }
 
@@ -451,14 +458,15 @@ router.post(
         await user.save();
 
         const verificationLink = `${FRONTEND_URL}/verify-email?token=${rawToken}`;
-        const result = await sendAuthLink(normalizedEmail, user.name, verificationLink, 'verify');      if (result && !result.sent) {
-        return res.json({
-          devMode: true,
-          rawToken,
-          verificationLink,
-          message: 'A new verification link is available below.',
-        });
-      }
+        const result = await sendAuthLink(normalizedEmail, user.name, verificationLink, 'verify');
+        if (result && !result.sent) {
+          return res.json({
+            devMode: true,
+            rawToken,
+            verificationLink,
+            message: 'A new verification link is available below.',
+          });
+        }
 
         return res.json({
           message: 'A new verification link has been sent to your email.',
@@ -563,8 +571,11 @@ router.post(
         const result = await sendAuthLink(email, user.name, verificationLink, 'verify');
 
         if (result && !result.sent) {
-          return res.status(503).json({
-            message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
+          return res.json({
+            devMode: true,
+            rawToken,
+            verificationLink,
+            message: 'A verification link is available below.',
           });
         }
 
@@ -653,9 +664,11 @@ router.post(
       const result = await sendAuthLink(normalizedEmail, user.name, resetLink, 'reset');
 
       if (result && !result.sent) {
-        console.error('Failed to send password reset email to:', normalizedEmail);
-        return res.status(503).json({
-          message: 'Unable to send password reset email. Our email service is currently unavailable. Please try again later.',
+        return res.json({
+          devMode: true,
+          rawToken,
+          verificationLink: resetLink,
+          message: 'A password reset link is available below.',
         });
       }
 
@@ -675,7 +688,14 @@ router.post(
   '/reset-password',
   [
     body('token').notEmpty().withMessage('Reset token is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+    body('password').custom((value) => {
+      const errors = validatePasswordStrength(value);
+      if (errors.length > 0) {
+        throw new Error(errors.join('. '));
+      }
+      return true;
+    }),
   ],
   async (req, res) => {
     try {
