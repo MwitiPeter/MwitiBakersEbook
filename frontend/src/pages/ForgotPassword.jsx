@@ -10,6 +10,7 @@ export default function ForgotPassword() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,19 +26,73 @@ export default function ForgotPassword() {
     try {
       const { data } = await API.post('/auth/forgot-password', { email });
 
-      if (data.devMode && data.code) {
-        // Email unavailable — redirect straight to reset with the code pre-filled
-        navigate(`/reset-password?email=${encodeURIComponent(email)}&code=${data.code}`);
+      if (data.devMode && data.rawToken) {
+        // Email unavailable — redirect straight to reset with the raw token
+        navigate(`/reset-password?token=${data.rawToken}`);
+      } else if (data.requiresVerification) {
+        // User is not yet verified — send them to verify page
+        setError(data.message || 'Please verify your email first.');
+        navigate(`/verify-email?email=${encodeURIComponent(email)}`);
       } else {
-        setMessage(data.message || 'A reset code has been sent to your email.');
-        navigate(`/reset-password?email=${encodeURIComponent(email)}`);
+        setMessage(data.message || 'A password reset link has been sent to your email.');
+        setSent(true);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send reset code. Please try again.');
+      setError(err.response?.data?.message || 'Failed to send reset link. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (sent) {
+    return (
+      <>
+        <SEO
+          title="Check Your Email"
+          description="Password reset link sent."
+          url="https://mwitibakers.com/forgot-password"
+          noindex
+        />
+        <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8">
+              <img
+                src="/New.jpg"
+                alt="Mwiti Bakers"
+                className="h-16 sm:h-20 w-auto mx-auto mb-4 object-contain"
+                loading="lazy"
+                decoding="async"
+              />
+              <h1 className="text-3xl font-bold text-brand-navy mt-2">Check Your Email</h1>
+            </div>
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+              <div className="text-6xl mb-4">📧</div>
+              <h2 className="text-xl font-bold text-brand-navy mb-2">Reset link sent</h2>
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                We sent a password reset link to <strong>{email}</strong>.
+                Click the link in the email to set a new password.
+                The link expires in <strong>1 hour</strong>.
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700 text-left">
+                💡 <strong>Tip:</strong> If you don't see the email in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
+              </div>
+              <button
+                onClick={() => { setSent(false); setMessage(''); }}
+                className="text-brand-gold font-medium hover:text-yellow-700 transition-colors text-sm"
+              >
+                Send again
+              </button>
+              <div className="mt-4">
+                <Link to="/login" className="text-gray-500 hover:text-brand-navy text-sm transition-colors">
+                  Back to Login
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -58,7 +113,7 @@ export default function ForgotPassword() {
               decoding="async"
             />
             <h1 className="text-3xl font-bold text-brand-navy mt-2">Forgot Password</h1>
-            <p className="text-gray-600 mt-1">Enter your email to receive a reset code</p>
+            <p className="text-gray-600 mt-1">Enter your email to receive a reset link</p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg p-8">
@@ -74,11 +129,6 @@ export default function ForgotPassword() {
                 <span>{message}</span>
               </div>
             )}
-
-            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700">
-              <strong>Note:</strong> Your email must be verified before you can reset your password. If you haven't verified yet, please{' '}
-              <Link to="/signup" className="underline font-medium">create an account</Link> first.
-            </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
@@ -107,10 +157,10 @@ export default function ForgotPassword() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    <span>Sending code...</span>
+                    <span>Sending reset link...</span>
                   </span>
                 ) : (
-                  'Send Reset Code'
+                  'Send Reset Link'
                 )}
               </button>
             </form>

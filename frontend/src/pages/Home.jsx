@@ -55,6 +55,7 @@ export default function Home() {
                 className="h-20 sm:h-24 md:h-28 w-auto object-contain drop-shadow-lg"
                 loading="eager"
                 decoding="async"
+                fetchPriority="high"
               />
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight">
@@ -91,7 +92,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-brand-cream">
+      <section className="py-20 bg-brand-cream section-offscreen animate-fade-in">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="section-title">What We Offer</h2>
@@ -141,7 +142,7 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white section-offscreen animate-slide-up">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -186,7 +187,7 @@ export default function Home() {
       </section>
 
       {/* Contact Section */}
-      <section className="py-20 bg-brand-cream">
+      <section className="py-20 bg-brand-cream section-offscreen animate-fade-in">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="section-title">Get In Touch</h2>
@@ -230,7 +231,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-brand-navy">
+      <section className="py-20 bg-brand-navy section-offscreen animate-slide-up">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Ready to Start Your Baking Journey?

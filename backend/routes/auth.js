@@ -4,9 +4,11 @@ const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
-const { sendVerificationCode } = require('../lib/email');
+const { sendAuthLink } = require('../lib/email');
 
 const router = express.Router();
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
@@ -37,15 +39,17 @@ router.post(
           return res.status(400).json({ message: 'Email already registered' });
         }
         // Resend verification for unverified users
-        const code = existingUser.generateVerificationCode();
+        const rawToken = existingUser.generateEmailVerificationToken();
         await existingUser.save();
-        const result = await sendVerificationCode(email, name, code);
+
+        const verificationLink = `${FRONTEND_URL}/verify-email?token=${rawToken}`;
+        const result = await sendAuthLink(email, existingUser.name, verificationLink, 'verify');
 
         // If email service isn't configured, auto-verify
         if (result && !result.sent) {
           existingUser.isVerified = true;
-          existingUser.verificationCode = undefined;
-          existingUser.verificationCodeExpires = undefined;
+          existingUser.emailVerificationToken = undefined;
+          existingUser.emailVerificationTokenExpires = undefined;
           await existingUser.save();
 
           const token = generateToken(existingUser);
@@ -59,29 +63,31 @@ router.post(
               name: existingUser.name,
               email: existingUser.email,
               role: existingUser.role,
+              isVerified: existingUser.isVerified,
+              notificationsEnabled: existingUser.notificationsEnabled,
             },
           });
         }
 
         return res.json({
           requiresVerification: true,
-          message: 'A verification code has been sent to your email.',
+          message: 'A verification link has been sent to your email.',
           email,
         });
       }
 
       const user = await User.create({ name, email, password, notificationsEnabled });
-      const code = user.generateVerificationCode();
+      const rawToken = user.generateEmailVerificationToken();
       await user.save();
 
-      // Send verification code via email
-      const result = await sendVerificationCode(email, name, code);
+      const verificationLink = `${FRONTEND_URL}/verify-email?token=${rawToken}`;
+      const result = await sendAuthLink(email, name, verificationLink, 'verify');
 
       // If email service isn't configured, auto-verify the user (degraded mode)
       if (result && !result.sent) {
         user.isVerified = true;
-        user.verificationCode = undefined;
-        user.verificationCodeExpires = undefined;
+        user.emailVerificationToken = undefined;
+        user.emailVerificationTokenExpires = undefined;
         await user.save();
 
         const token = generateToken(user);
@@ -95,13 +101,15 @@ router.post(
             name: user.name,
             email: user.email,
             role: user.role,
+            isVerified: user.isVerified,
+            notificationsEnabled: user.notificationsEnabled,
           },
         });
       }
 
       res.status(201).json({
         requiresVerification: true,
-        message: 'Account created! Please check your email for a verification code.',
+        message: 'Account created! Please check your email for a verification link.',
         email,
       });
     } catch (error) {
@@ -111,13 +119,10 @@ router.post(
   }
 );
 
-// Verify email with code
+// Verify email with token (from link click)
 router.post(
   '/verify-email',
-  [
-    body('email').isEmail().withMessage('Valid email is required'),
-    body('code').matches(/^\d{6}$/).withMessage('Verification code must be 6 digits'),
-  ],
+  [body('token').notEmpty().withMessage('Verification token is required')],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -125,35 +130,22 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { email, code } = req.body;
-      const user = await User.findOne({ email }).select('+verificationCode +verificationCodeExpires');
+      const { token: rawToken } = req.body;
+
+      // Find user by the hashed token
+      const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const user = await User.findOne({
+        emailVerificationToken: hashedToken,
+        emailVerificationTokenExpires: { $gt: new Date() },
+      });
 
       if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      if (user.isVerified) {
-        const token = generateToken(user);
-        return res.json({
-          verified: true,
-          message: 'Email already verified',
-          token,
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-          },
-        });
-      }
-
-      if (!user.compareVerificationCode(code)) {
-        return res.status(400).json({ message: 'Invalid or expired verification code' });
+        return res.status(400).json({ message: 'Invalid or expired verification link.' });
       }
 
       user.isVerified = true;
-      user.verificationCode = undefined;
-      user.verificationCodeExpires = undefined;
+      user.emailVerificationToken = undefined;
+      user.emailVerificationTokenExpires = undefined;
       await user.save();
 
       const token = generateToken(user);
@@ -167,6 +159,8 @@ router.post(
           name: user.name,
           email: user.email,
           role: user.role,
+          isVerified: user.isVerified,
+          notificationsEnabled: user.notificationsEnabled,
         },
       });
     } catch (error) {
@@ -176,9 +170,9 @@ router.post(
   }
 );
 
-// Resend verification code
+// Resend verification link
 router.post(
-  '/resend-code',
+  '/resend-link',
   [body('email').isEmail().withMessage('Valid email is required')],
   async (req, res) => {
     try {
@@ -198,29 +192,32 @@ router.post(
         return res.json({ message: 'Email already verified' });
       }
 
-      const code = user.generateVerificationCode();
+      const rawToken = user.generateEmailVerificationToken();
       await user.save();
-      const result = await sendVerificationCode(email, user.name, code);
+
+      const verificationLink = `${FRONTEND_URL}/verify-email?token=${rawToken}`;
+      const result = await sendAuthLink(email, user.name, verificationLink, 'verify');
 
       // If email service isn't configured, auto-verify
       if (result && !result.sent) {
         user.isVerified = true;
-        user.verificationCode = undefined;
-        user.verificationCodeExpires = undefined;
+        user.emailVerificationToken = undefined;
+        user.emailVerificationTokenExpires = undefined;
         await user.save();
 
         return res.json({
           autoVerified: true,
           message: 'Email automatically verified (unable to send verification email). You can now log in.',
+          rawToken: process.env.NODE_ENV === 'development' ? rawToken : undefined,
         });
       }
 
       res.json({
-        message: 'A new verification code has been sent to your email.',
+        message: 'A new verification link has been sent to your email.',
       });
     } catch (error) {
-      console.error('Resend code error:', error);
-      res.status(500).json({ message: 'Unable to send verification code. Please try again later.' });
+      console.error('Resend link error:', error);
+      res.status(500).json({ message: 'Unable to send verification link. Please try again later.' });
     }
   }
 );
@@ -252,16 +249,18 @@ router.post(
       }
 
       if (!user.isVerified) {
-        // Send a fresh verification code
-        const code = user.generateVerificationCode();
+        // Send a fresh verification link
+        const rawToken = user.generateEmailVerificationToken();
         await user.save();
-        const result = await sendVerificationCode(email, user.name, code);
+
+        const verificationLink = `${FRONTEND_URL}/verify-email?token=${rawToken}`;
+        const result = await sendAuthLink(email, user.name, verificationLink, 'verify');
 
         // If email service isn't configured, auto-verify and log in
         if (result && !result.sent) {
           user.isVerified = true;
-          user.verificationCode = undefined;
-          user.verificationCodeExpires = undefined;
+          user.emailVerificationToken = undefined;
+          user.emailVerificationTokenExpires = undefined;
           user.lastLogin = new Date();
           await user.save();
 
@@ -276,13 +275,16 @@ router.post(
               name: user.name,
               email: user.email,
               role: user.role,
+              isVerified: user.isVerified,
+              notificationsEnabled: user.notificationsEnabled,
+              lastLogin: user.lastLogin,
             },
           });
         }
 
         return res.json({
           requiresVerification: true,
-          message: 'Please verify your email before logging in. A new code has been sent.',
+          message: 'Please verify your email before logging in. A new verification link has been sent.',
           email: user.email,
         });
       }
@@ -300,6 +302,9 @@ router.post(
           name: user.name,
           email: user.email,
           role: user.role,
+          isVerified: user.isVerified,
+          notificationsEnabled: user.notificationsEnabled,
+          lastLogin: user.lastLogin,
         },
       });
     } catch (error) {
@@ -323,7 +328,7 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
-// Request password reset (sends verification code to email)
+// Request password reset (sends reset link to email)
 router.post(
   '/forgot-password',
   [body('email').isEmail().withMessage('Valid email is required')],
@@ -341,29 +346,34 @@ router.post(
         return res.status(404).json({ message: 'No account found with this email' });
       }
 
-      // Generate a reset code
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      user.resetPasswordCode = crypto.createHash('sha256').update(code).digest('hex');
-      user.resetPasswordCodeExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+      if (!user.isVerified) {
+        return res.status(400).json({
+          message: 'Please verify your email before resetting your password.',
+          requiresVerification: true,
+          email: user.email,
+        });
+      }
+
+      // Generate a reset token
+      const rawToken = user.generateResetPasswordToken();
       await user.save();
 
-      // Try to send the reset code via email
-      const result = await sendVerificationCode(email, user.name, code, 'reset');
+      const resetLink = `${FRONTEND_URL}/reset-password?token=${rawToken}`;
+      const result = await sendAuthLink(email, user.name, resetLink, 'reset');
 
       if (result && !result.sent) {
-        console.log(`\n🔑 Password reset code for ${email}: ${code} (not sent — email unavailable)`);
+        console.log(`\n🔑 Password reset link for ${email}: ${resetLink} (not sent — email unavailable)`);
 
-        // Return the code so the frontend can redirect the user directly to the reset page
         return res.json({
           message: 'Email service unavailable. Redirecting to password reset...',
           email,
-          code,
+          rawToken,
           devMode: true,
         });
       }
 
       res.json({
-        message: 'A password reset code has been sent to your email.',
+        message: 'A password reset link has been sent to your email.',
         email,
       });
     } catch (error) {
@@ -373,12 +383,11 @@ router.post(
   }
 );
 
-// Verify reset code and reset password
+// Reset password with token (from link click)
 router.post(
   '/reset-password',
   [
-    body('email').isEmail().withMessage('Valid email is required'),
-    body('code').matches(/^\d{6}$/).withMessage('Verification code must be 6 digits'),
+    body('token').notEmpty().withMessage('Reset token is required'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   ],
   async (req, res) => {
@@ -388,32 +397,23 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { email, code, password } = req.body;
-      const user = await User.findOne({ email }).select('+resetPasswordCode +resetPasswordCodeExpires');
+      const { token: rawToken, password } = req.body;
+
+      // Find user by the hashed token
+      const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const user = await User.findOne({
+        resetPasswordToken: hashedToken,
+        resetPasswordTokenExpires: { $gt: new Date() },
+      }).select('+resetPasswordToken +resetPasswordTokenExpires');
 
       if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      // Check if user is verified
-      if (!user.isVerified) {
-        return res.status(400).json({ message: 'Please verify your email before resetting your password.' });
-      }
-
-      // Verify the reset code
-      const hashedCode = crypto.createHash('sha256').update(code).digest('hex');
-      if (
-        user.resetPasswordCode !== hashedCode ||
-        !user.resetPasswordCodeExpires ||
-        user.resetPasswordCodeExpires < new Date()
-      ) {
-        return res.status(400).json({ message: 'Invalid or expired reset code' });
+        return res.status(400).json({ message: 'Invalid or expired reset link.' });
       }
 
       // Update password
       user.password = password;
-      user.resetPasswordCode = undefined;
-      user.resetPasswordCodeExpires = undefined;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordTokenExpires = undefined;
       await user.save();
 
       res.json({ message: 'Password reset successfully! You can now log in with your new password.' });

@@ -87,7 +87,7 @@ export default function RecipeBooks() {
         description="Browse and download professional baking recipe books from Mwiti Bakers. Expert techniques, detailed instructions, and premium baking content."
         url="https://mwitibakers.com/recipe-books"
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in">
       <div className="text-center mb-8 sm:mb-10">
         <img
           src="/New.jpg"

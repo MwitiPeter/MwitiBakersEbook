@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { HiMenu, HiX, HiUser, HiLogout, HiCog } from 'react-icons/hi';
 
-export default function Navbar() {
+function NavbarInner() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = useCallback((path) => location.pathname === path, [location.pathname]);
 
   const navLinks = [
     { label: 'Home', path: '/' },
@@ -21,24 +21,25 @@ export default function Navbar() {
       : []),
   ];
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     navigate('/');
     setIsOpen(false);
-  };
+  }, [logout, navigate]);
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
+          <Link to="/" className="flex items-center space-x-2 group min-h-[44px] min-w-[44px]">
             <img
               src="/New.jpg"
               alt="Mwiti Bakers - Home of Sweetness - Premium Digital Bakery"
               className="h-10 sm:h-12 w-auto object-contain hover:scale-105 transition-transform duration-200"
               loading="eager"
               decoding="async"
+              fetchPriority="high"
             />
           </Link>
 
@@ -89,7 +90,7 @@ export default function Navbar() {
                 )}
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-all"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-all min-h-[44px]"
                 >
                   <HiLogout className="text-lg" />
                   <span>Logout</span>
@@ -97,10 +98,10 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/login" className="btn-outline text-sm py-2 px-5">
+                <Link to="/login" className="btn-outline text-sm py-2 px-5 min-h-[44px] flex items-center">
                   Login
                 </Link>
-                <Link to="/signup" className="btn-primary text-sm py-2 px-5">
+                <Link to="/signup" className="btn-primary text-sm py-2 px-5 min-h-[44px] flex items-center">
                   Sign Up
                 </Link>
               </>
@@ -110,7 +111,9 @@ export default function Navbar() {
           {/* Mobile menu button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-brand-cream transition-colors"
+            className="md:hidden p-3 rounded-lg text-gray-600 hover:bg-brand-cream transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            aria-label={isOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isOpen}
           >
             {isOpen ? <HiX className="text-2xl" /> : <HiMenu className="text-2xl" />}
           </button>
@@ -119,14 +122,14 @@ export default function Navbar() {
 
       {/* Mobile Nav */}
       {isOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 pb-4">
-          <div className="px-4 space-y-1 pt-2">
+        <div className="md:hidden bg-white border-t border-gray-100 shadow-lg">
+          <div className="px-4 py-2 space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-                className={`block px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`block px-4 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] flex items-center ${
                   isActive(link.path)
                     ? 'bg-brand-navy text-white'
                     : 'text-gray-600 hover:bg-brand-cream'
@@ -141,24 +144,25 @@ export default function Navbar() {
                 <Link
                   to="/dashboard"
                   onClick={() => setIsOpen(false)}
-                  className="block px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-brand-cream"
-                >
-                  Dashboard
-                </Link>
+                  className="flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-brand-cream min-h-[44px]"              >
+                <HiUser className="text-lg" />
+                <span>Dashboard</span>
+              </Link>
                 {user.role === 'admin' && (
                   <Link
                     to="/admin"
                     onClick={() => setIsOpen(false)}
-                    className="block px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-brand-cream"
+                    className="flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-brand-cream min-h-[44px]"
                   >
-                    Admin Panel
+                    <HiCog className="text-lg" />
+                    <span>Admin Panel</span>
                   </Link>
-                )}
-                <button
+                )}                  <button
                   onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50"
+                  className="flex items-center space-x-2 w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 min-h-[44px]"
                 >
-                  Logout
+                  <HiLogout className="text-lg" />
+                  <span>Logout</span>
                 </button>
               </>
             ) : (
@@ -166,14 +170,13 @@ export default function Navbar() {
                 <Link
                   to="/login"
                   onClick={() => setIsOpen(false)}
-                  className="block px-4 py-2 rounded-lg text-sm font-medium text-brand-navy hover:bg-brand-cream"
-                >
-                  Login
-                </Link>
+                  className="flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium text-brand-navy hover:bg-brand-cream min-h-[44px]"                  >
+                    Login
+                  </Link>
                 <Link
                   to="/signup"
                   onClick={() => setIsOpen(false)}
-                  className="block px-4 py-2 rounded-lg text-sm font-medium bg-brand-navy text-white text-center rounded-lg"
+                  className="block px-4 py-3 rounded-lg text-sm font-medium bg-brand-navy text-white text-center min-h-[44px] flex items-center justify-center mt-2"
                 >
                   Sign Up
                 </Link>
@@ -185,3 +188,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+export default memo(NavbarInner);

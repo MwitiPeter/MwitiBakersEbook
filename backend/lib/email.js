@@ -17,35 +17,44 @@ const getTransporter = () => {
       user: GMAIL_USER,
       pass: GMAIL_APP_PASSWORD,
     },
-    // Timeout settings to avoid hanging for too long
-    connectionTimeout: 5000,  // 5 seconds to establish connection
-    greetingTimeout: 5000,    // 5 seconds for SMTP greeting
-    socketTimeout: 10000,     // 10 seconds for socket operations
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000,
   });
 
   return transporter;
 };
 
-const sendVerificationCode = async (email, name, code, purpose = 'verify') => {
+/**
+ * Send an email with a verification link.
+ * @param {string} email - Recipient email
+ * @param {string} name - Recipient name
+ * @param {string} link - Full verification link (e.g. https://site.com/verify-email?token=xxx)
+ * @param {'verify'|'reset'} purpose - Email purpose
+ */
+const sendAuthLink = async (email, name, link, purpose = 'verify') => {
   const transport = getTransporter();
+  const isReset = purpose === 'reset';
 
-  // If no Gmail credentials are configured, log the code to console
+  // If no Gmail credentials are configured, log the token to console
   if (!transport) {
-    console.log(`\n📧 ${purpose === 'reset' ? 'Password reset' : 'Verification'} code for ${email}: ${code} (not sent — GMAIL_USER / GMAIL_APP_PASSWORD not set)`);
+    const token = new URL(link).searchParams.get('token');
+    console.log(`\n📧 ${isReset ? 'Password reset' : 'Verification'} link for ${email}: ${link}`);
+    console.log(`   Raw token: ${token}`);
     console.log(`   Set GMAIL_USER and GMAIL_APP_PASSWORD in your env to enable email delivery.`);
     console.log(`   To get a Gmail App Password: https://myaccount.google.com/apppasswords\n`);
     return { sent: false };
   }
 
-  const isReset = purpose === 'reset';
   const subject = isReset
     ? 'Reset your Mwiti Bakers password'
     : 'Verify your Mwiti Bakers account';
 
   const heading = isReset ? 'Reset Your Password' : 'Verify Your Email';
   const intro = isReset
-    ? 'We received a request to reset your password. Use the code below to set a new password.'
-    : 'Welcome to Mwiti Bakers! Please use the verification code below to activate your account.';
+    ? 'We received a request to reset your password. Click the button below to set a new password.'
+    : 'Welcome to Mwiti Bakers! Please click the button below to activate your account.';
+  const buttonText = isReset ? 'Reset Password' : 'Verify Email';
   const footerNote = isReset
     ? "If you didn't request a password reset, you can safely ignore this email."
     : "If you didn't create an account, you can safely ignore this email.";
@@ -65,19 +74,23 @@ const sendVerificationCode = async (email, name, code, purpose = 'verify') => {
           <div style="background: #f7f5f0; border-radius: 16px; padding: 30px;">
             <h2 style="color: #0b356d; margin-top: 0;">${heading}</h2>
             <p style="color: #666; line-height: 1.6;">Hi ${name},</p>
-            <p style="color: #666; line-height: 1.6;">
-              ${intro}
-            </p>
-            <div style="background: white; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
-              <div style="font-size: 32px; letter-spacing: 8px; font-weight: bold; color: #0b356d;">
-                ${code}
-              </div>
+            <p style="color: #666; line-height: 1.6;">${intro}</p>
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="${link}"
+                 style="display: inline-block; background: #0b356d; color: white; padding: 14px 36px;
+                        border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: bold;">
+                ${buttonText}
+              </a>
             </div>
             <p style="color: #999; font-size: 12px; line-height: 1.4;">
-              This code expires in 30 minutes. ${footerNote}
+              This link expires in ${isReset ? '1 hour' : '24 hours'}. ${footerNote}
+            </p>
+            <p style="color: #999; font-size: 12px; line-height: 1.4;">
+              If the button doesn't work, copy and paste this URL into your browser:<br />
+              <span style="color: #0b356d; word-break: break-all;">${link}</span>
             </p>
             <div style="background: #fef3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin-top: 16px; font-size: 12px; color: #856404;">
-              <strong>📌 Didn't receive the code?</strong> Please check your <strong>Spam</strong> or <strong>Promotions</strong> folder
+              <strong>📌 Didn't receive the email?</strong> Please check your <strong>Spam</strong> or <strong>Promotions</strong> folder
               and mark us as "Not Spam" to ensure future emails reach your inbox.
             </div>
           </div>
@@ -92,9 +105,9 @@ const sendVerificationCode = async (email, name, code, purpose = 'verify') => {
     return { sent: true };
   } catch (err) {
     console.error('Failed to send email:', err);
-    console.log(`\n📧 ${isReset ? 'Password reset' : 'Verification'} code for ${email}: ${code} (sending failed)`);
+    console.log(`\n📧 ${isReset ? 'Password reset' : 'Verification'} link for ${email}: ${link} (sending failed)`);
     return { sent: false };
   }
 };
 
-module.exports = { sendVerificationCode };
+module.exports = { sendAuthLink };

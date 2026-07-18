@@ -31,10 +31,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    verificationCode: {
+    emailVerificationToken: {
       type: String,
     },
-    verificationCodeExpires: {
+    emailVerificationTokenExpires: {
       type: Date,
     },
     lastLogin: {
@@ -48,11 +48,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    resetPasswordCode: {
+    resetPasswordToken: {
       type: String,
       select: false,
     },
-    resetPasswordCodeExpires: {
+    resetPasswordTokenExpires: {
       type: Date,
       select: false,
     },
@@ -74,25 +74,27 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;
-  delete obj.verificationCode;
-  delete obj.verificationCodeExpires;
-  delete obj.resetPasswordCode;
-  delete obj.resetPasswordCodeExpires;
+  delete obj.emailVerificationToken;
+  delete obj.emailVerificationTokenExpires;
+  delete obj.resetPasswordToken;
+  delete obj.resetPasswordTokenExpires;
   return obj;
 };
 
-// Generate a 6-digit verification code
-userSchema.methods.generateVerificationCode = function () {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  this.verificationCode = crypto.createHash('sha256').update(code).digest('hex');
-  this.verificationCodeExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-  return code;
+// Generate a verification token (raw token returned for email link, hash stored in DB)
+userSchema.methods.generateEmailVerificationToken = function () {
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  this.emailVerificationToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+  this.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  return rawToken;
 };
 
-// Compare a plain code against the stored hash
-userSchema.methods.compareVerificationCode = function (code) {
-  const hashed = crypto.createHash('sha256').update(code).digest('hex');
-  return this.verificationCode === hashed && this.verificationCodeExpires > new Date();
+// Generate a password reset token (1 hour expiry)
+userSchema.methods.generateResetPasswordToken = function () {
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  this.resetPasswordToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+  this.resetPasswordTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  return rawToken;
 };
 
 module.exports = mongoose.model('User', userSchema);

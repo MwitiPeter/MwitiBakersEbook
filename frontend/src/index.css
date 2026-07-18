@@ -3,8 +3,27 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* Smooth scrolling for anchor links */
+    scroll-behavior: smooth;
+    /* Ensure text remains crisp during animations */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Improve text rendering */
+    text-rendering: optimizeLegibility;
+  }
+
   body {
     @apply bg-brand-cream text-gray-800 font-sans;
+    /* Prevent layout shift from scrollbar */
+    overflow-y: scroll;
+  }
+
+  /* Improve touch targets on mobile */
+  @media (max-width: 768px) {
+    button, a, input, select, textarea {
+      font-size: 16px !important; /* Prevent iOS zoom on focus */
+    }
   }
 }
 
@@ -13,22 +32,28 @@
     @apply bg-brand-navy text-white px-6 py-3 rounded-lg font-semibold
       hover:bg-blue-900 transition-all duration-200 
       shadow-md hover:shadow-lg active:scale-[0.98];
+    /* Force GPU acceleration for smooth animations */
+    -webkit-tap-highlight-color: transparent;
   }
 
   .btn-gold {
     @apply bg-brand-gold text-white px-6 py-3 rounded-lg font-semibold
       hover:bg-yellow-700 transition-all duration-200 
       shadow-md hover:shadow-lg active:scale-[0.98];
+    -webkit-tap-highlight-color: transparent;
   }
 
   .btn-outline {
     @apply border-2 border-brand-navy text-brand-navy px-6 py-3 rounded-lg font-semibold
       hover:bg-brand-navy hover:text-white transition-all duration-200
       active:scale-[0.98];
+    -webkit-tap-highlight-color: transparent;
   }
 
   .card {
     @apply bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden;
+    /* Contain paint for better render performance */
+    contain: content;
   }
 
   .input-field {
@@ -53,6 +78,38 @@
     content: '';
     @apply absolute inset-0 backdrop-blur-md bg-white/10 z-10;
   }
+
+  /* Responsive container padding */
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8;
+  }
+
+  /* Section with content-visibility for better scroll performance */
+  .section-offscreen {
+    content-visibility: auto;
+    contain-intrinsic-size: 500px;
+  }
+
+  /* Responsive table wrapper */
+  .table-responsive {
+    @apply overflow-x-auto -mx-4 sm:mx-0;
+  }
+
+  .table-responsive-inner {
+    @apply min-w-[500px] sm:min-w-0 px-4 sm:px-0;
+  }
+
+  /* Modal base styles */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60;
+    /* GPU acceleration */
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-2xl max-h-[90vh] overflow-y-auto;
+    max-width: min(90vw, 36rem);
+  }
 }
 
 /* Custom animations */
@@ -61,15 +118,35 @@
   100% { background-position: 200% 0; }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .loading-shimmer {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
+/* Entrance animations */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -82,4 +159,26 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-brand-gold/60;
+}
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-brand-gold;
+}
+
+/* Remove focus outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Prevent layout shifts from lazy loaded images */
+img {
+  @apply bg-gray-100;
+}
+
+/* Print styles */
+@media print {
+  nav, footer, .no-print {
+    display: none !important;
+  }
 }

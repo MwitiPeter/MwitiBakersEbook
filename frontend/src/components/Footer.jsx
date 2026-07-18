@@ -1,8 +1,9 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { HiMail, HiPhone, HiLocationMarker } from 'react-icons/hi';
 import { FaFacebook, FaInstagram, FaTiktok, FaLinkedin } from 'react-icons/fa';
 
-export default function Footer() {
+const Footer = memo(function Footer() {
   return (
     <footer className="bg-brand-navy text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -115,4 +116,6 @@ export default function Footer() {
       </div>
     </footer>
   );
-}
+});
+
+export default Footer;

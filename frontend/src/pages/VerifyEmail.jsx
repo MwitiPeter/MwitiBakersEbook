@@ -1,91 +1,135 @@
-import { useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 import SEO from '../components/SEO';
 import { HiCheckCircle } from 'react-icons/hi';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const email = searchParams.get('email') || '';
+  const tokenFromUrl = searchParams.get('token') || '';
 
-  const [code, setCode] = useState(['', '', '', '', '', '']);
+  const [status, setStatus] = useState(tokenFromUrl ? 'verifying' : 'idle');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
 
-  const handleCodeChange = (index, value) => {
-    if (value.length > 1) return;
-    if (value && !/^\d$/.test(value)) return;
+  // Auto-verify when a token is present in the URL (from email link click)
+  useEffect(() => {
+    if (!tokenFromUrl) return;
 
-    const newCode = [...code];
-    newCode[index] = value;
-    setCode(newCode);
+    const verifyWithToken = async () => {
+      try {
+        const { data } = await API.post('/auth/verify-email', { token: tokenFromUrl });
 
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`code-${index + 1}`);
-      nextInput?.focus();
-    }
-  };
+        if (data.verified && data.token) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setStatus('success');
+          setMessage('Email verified successfully! Redirecting to dashboard...');
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
+        }
+      } catch (err) {
+        setStatus('error');
+        setError(err.response?.data?.message || 'Verification failed. The link may be expired or invalid.');
+      }
+    };
 
-  const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !code[index] && index > 0) {
-      const prevInput = document.getElementById(`code-${index - 1}`);
-      prevInput?.focus();
-    }
-  };
+    verifyWithToken();
+  }, [tokenFromUrl, navigate]);
 
-  const handlePaste = (e) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (pasted.length === 6) {
-      setCode(pasted.split(''));
-      document.getElementById('code-5')?.focus();
-    }
-  };
+  // If token is being verified, show a loading screen
+  if (status === 'verifying') {
+    return (
+      <>
+        <SEO
+          title="Verifying Email"
+          description="Verifying your email for Mwiti Bakers."
+          url="https://mwitibakers.com/verify-email"
+          noindex
+        />
+        <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+          <div className="text-center">
+            <div className="animate-spin h-12 w-12 border-4 border-brand-gold border-t-transparent rounded-full mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-brand-navy mb-2">Verifying your email...</h2>
+            <p className="text-gray-500">Please wait a moment.</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const fullCode = code.join('');
-    if (fullCode.length !== 6) {
-      setError('Please enter the complete 6-digit code');
+  // Success state
+  if (status === 'success') {
+    return (
+      <>
+        <SEO
+          title="Email Verified"
+          description="Your Mwiti Bakers email has been verified."
+          url="https://mwitibakers.com/verify-email"
+          noindex
+        />
+        <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+            <div className="text-6xl mb-4">🎉</div>
+            <h1 className="text-2xl font-bold text-green-700 mb-2">Email Verified!</h1>
+            <p className="text-gray-600 mb-6">{message}</p>
+            <Link to="/dashboard" className="btn-primary inline-block">
+              Go to Dashboard
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Error state from token verification
+  if (status === 'error' && tokenFromUrl) {
+    return (
+      <>
+        <SEO
+          title="Verification Failed"
+          description="Email verification failed for Mwiti Bakers."
+          url="https://mwitibakers.com/verify-email"
+          noindex
+        />
+        <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+            <div className="text-6xl mb-4">😕</div>
+            <h1 className="text-2xl font-bold text-red-700 mb-2">Verification Failed</h1>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Link to="/login" className="btn-primary inline-block">
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Normal state — user needs to check email (no token in URL)
+  const handleResendLink = async () => {
+    if (!email) {
+      setError('No email address provided. Please sign up again.');
       return;
     }
-
-    setError('');
     setLoading(true);
-
+    setError('');
     try {
-      const { data } = await API.post('/auth/verify-email', {
-        email,
-        code: fullCode,
-      });
-
-      if (data.verified && data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        window.location.href = '/dashboard';
+      const { data } = await API.post('/auth/resend-link', { email });
+      if (data.autoVerified) {
+        setMessage(data.message || 'Email automatically verified!');
+        setTimeout(() => navigate('/login'), 2000);
+        return;
       }
+      setMessage(data.message || 'A new verification link has been sent!');
     } catch (err) {
-      setError(err.response?.data?.message || 'Verification failed. Please try again.');
+      setError(err.response?.data?.message || 'Failed to resend verification link');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResendCode = async () => {
-    if (!email) return;
-    setResending(true);
-    setError('');
-    try {
-      const { data } = await API.post('/auth/resend-code', { email });
-      setMessage(data.message || 'A new verification code has been sent!');
-      setCode(['', '', '', '', '', '']);
-      document.getElementById('code-0')?.focus();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to resend code');
-    } finally {
-      setResending(false);
     }
   };
 
@@ -93,7 +137,7 @@ export default function VerifyEmail() {
     <>
       <SEO
         title="Verify Email"
-        description="Enter the verification code sent to your email to activate your Mwiti Bakers account."
+        description="Check your email to verify your Mwiti Bakers account."
         url="https://mwitibakers.com/verify-email"
         noindex
       />
@@ -109,12 +153,12 @@ export default function VerifyEmail() {
           />
           <h1 className="text-3xl font-bold text-brand-navy mt-2">Check Your Email</h1>
           <p className="text-gray-600 mt-2">
-            We sent a verification code to<br />
+            We sent a verification link to<br />
             <span className="font-semibold text-brand-navy">{email || 'your email'}</span>
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
           {error && (
             <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">
               {error}
@@ -128,57 +172,35 @@ export default function VerifyEmail() {
             </div>
           )}
 
-          <p className="text-sm text-gray-500 mb-4 text-center">
-            Enter the 6-digit verification code from your email
+          <div className="text-6xl mb-4">📧</div>
+          <h2 className="text-xl font-bold text-brand-navy mb-2">Verify your email address</h2>
+          <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+            Click the link in the email we sent to <strong>{email || 'your email'}</strong> to activate your account.
+            The link expires in <strong>24 hours</strong>.
           </p>
-          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-xs text-amber-700">
-            💡 <strong>Tip:</strong> If you don't see the code in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
+
+          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700 text-left">
+            💡 <strong>Tip:</strong> If you don't see the email in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
           </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="flex justify-center gap-2 sm:gap-3 mb-6" onPaste={handlePaste}>
-              {code.map((digit, index) => (
-                <input
-                  key={index}
-                  id={`code-${index}`}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleCodeChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold border-2 rounded-xl focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all"
-                  style={{
-                    borderColor: digit ? '#c89b5a' : '#e5e7eb',
-                  }}
-                  autoFocus={index === 0}
-                />
-              ))}
-            </div>
+          <button
+            onClick={handleResendLink}
+            disabled={loading}
+            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Sending...' : 'Resend Verification Link'}
+          </button>
 
-            <button
-              type="submit"
-              disabled={loading || code.join('').length !== 6}
-              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Verifying...' : 'Verify Email'}
-            </button>
-          </form>
-
-          <div className="text-center mt-6 space-y-3">
-            <button
-              onClick={handleResendCode}
-              disabled={resending}
-              className="text-brand-gold font-medium hover:text-yellow-700 transition-colors text-sm disabled:opacity-50"
-            >
-              {resending ? 'Sending...' : "Didn't receive the code? Resend"}
-            </button>
-
-            <div>
-              <Link to="/login" className="text-gray-500 hover:text-brand-navy text-sm transition-colors">
-                Back to Login
+          <div className="mt-6 space-y-2">
+            <p className="text-sm text-gray-600">
+              Already verified?{' '}
+              <Link to="/login" className="text-brand-gold font-semibold hover:text-yellow-700">
+                Sign In
               </Link>
-            </div>
+            </p>
+            <Link to="/login" className="text-gray-500 hover:text-brand-navy text-sm transition-colors block">
+              Back to Login
+            </Link>
           </div>
         </div>
       </div>

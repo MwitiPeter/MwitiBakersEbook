@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 import PasswordInput from '../components/PasswordInput';
@@ -8,60 +8,32 @@ import { HiCheckCircle } from 'react-icons/hi';
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || '';
+  const tokenFromUrl = searchParams.get('token') || '';
+  const emailFromUrl = searchParams.get('email') || '';
   const codeFromUrl = searchParams.get('code') || '';
 
-  const [code, setCode] = useState(() => {
-    if (codeFromUrl.length === 6 && /^\d{6}$/.test(codeFromUrl)) {
-      return codeFromUrl.split('');
-    }
-    return ['', '', '', '', '', ''];
-  });
+  const [resetToken, setResetToken] = useState(tokenFromUrl || '');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const handleCodeChange = (index, value) => {
-    if (value.length > 1) return;
-    if (value && !/^\d$/.test(value)) return;
-
-    const newCode = [...code];
-    newCode[index] = value;
-    setCode(newCode);
-
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`rcode-${index + 1}`);
-      nextInput?.focus();
+  // If we have a legacy code flow (email + code from dev mode), guide user
+  useEffect(() => {
+    if (codeFromUrl && emailFromUrl) {
+      setError('The password reset flow has been updated. Please go back to "Forgot Password" and request a new reset link.');
     }
-  };
-
-  const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !code[index] && index > 0) {
-      const prevInput = document.getElementById(`rcode-${index - 1}`);
-      prevInput?.focus();
-    }
-  };
-
-  const handlePaste = (e) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (pasted.length === 6) {
-      setCode(pasted.split(''));
-      document.getElementById('rcode-5')?.focus();
-    }
-  };
+  }, [codeFromUrl, emailFromUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
 
-    const fullCode = code.join('');
-    if (fullCode.length !== 6) {
-      setError('Please enter the complete 6-digit code');
+    if (!resetToken) {
+      setError('Missing reset token. Please use the link from your email.');
       return;
     }
 
@@ -78,48 +50,51 @@ export default function ResetPassword() {
     setLoading(true);
     try {
       const { data } = await API.post('/auth/reset-password', {
-        email,
-        code: fullCode,
+        token: resetToken,
         password: newPassword,
       });
       setMessage(data.message || 'Password reset successfully!');
+      setSuccess(true);
       setTimeout(() => {
         navigate('/login');
-      }, 2000);
+      }, 2500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
+      setError(err.response?.data?.message || 'Failed to reset password. The link may have expired.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResendCode = async () => {
-    if (!email) return;
-    setResending(true);
-    setError('');
-    try {
-      const { data } = await API.post('/auth/forgot-password', { email });
-
-      if (data.devMode && data.code) {
-        setCode(data.code.split(''));
-        setMessage('Your reset code has been refreshed. Enter your new password below.');
-      } else {
-        setMessage(data.message || 'A new code has been sent to your email!');
-        setCode(['', '', '', '', '', '']);
-      }
-      document.getElementById('rcode-0')?.focus();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to resend code');
-    } finally {
-      setResending(false);
-    }
-  };
+  // Success state
+  if (success) {
+    return (
+      <>
+        <SEO
+          title="Password Reset"
+          description="Your Mwiti Bakers password has been reset."
+          url="https://mwitibakers.com/reset-password"
+          noindex
+        />
+        <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+            <div className="text-6xl mb-4">🔐</div>
+            <h1 className="text-2xl font-bold text-green-700 mb-2">Password Reset!</h1>
+            <p className="text-gray-600 mb-6">{message}</p>
+            <p className="text-sm text-gray-500 mb-4">Redirecting you to login...</p>
+            <Link to="/login" className="btn-primary inline-block">
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
       <SEO
-        title="Reset Password"
-        description="Reset your Mwiti Bakers account password."
+        title="Set New Password"
+        description="Set a new password for your Mwiti Bakers account."
         url="https://mwitibakers.com/reset-password"
         noindex
       />
@@ -133,10 +108,11 @@ export default function ResetPassword() {
               loading="lazy"
               decoding="async"
             />
-            <h1 className="text-3xl font-bold text-brand-navy mt-2">Reset Password</h1>
+            <h1 className="text-3xl font-bold text-brand-navy mt-2">Set New Password</h1>
             <p className="text-gray-600 mt-1">
-              Enter the code sent to<br />
-              <span className="font-semibold text-brand-navy">{email || 'your email'}</span>
+              {tokenFromUrl
+                ? 'Choose a new password for your account.'
+                : 'Enter the reset token and your new password.'}
             </p>
           </div>
 
@@ -154,39 +130,31 @@ export default function ResetPassword() {
               </div>
             )}
 
-            {codeFromUrl ? (
-              <div className="bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 mb-4 text-sm text-amber-800 flex items-start space-x-2">
-                <span>📧 <strong>Email service unavailable.</strong> Your reset code has been pre-filled below. Just enter your new password to continue.</span>
-              </div>
-            ) : (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-xs text-amber-700">
-                💡 <strong>Tip:</strong> If you don't see the code in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
-              </div>
-            )}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700">
+              💡 This link expires in <strong>1 hour</strong>. Make sure to set your new password soon.
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <p className="text-sm text-gray-500 mb-3 text-center">Enter the 6-digit code from your email</p>
-                <div className="flex justify-center gap-2 sm:gap-3 mb-2" onPaste={handlePaste}>
-                  {code.map((digit, index) => (
-                    <input
-                      key={index}
-                      id={`rcode-${index}`}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleCodeChange(index, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold border-2 rounded-xl focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all"
-                      style={{
-                        borderColor: digit ? '#c89b5a' : '#e5e7eb',
-                      }}
-                      autoFocus={index === 0}
-                    />
-                  ))}
+              {!tokenFromUrl && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Reset Token</label>
+                  <input
+                    type="text"
+                    value={resetToken}
+                    onChange={(e) => setResetToken(e.target.value)}
+                    className="input-field"
+                    placeholder="Paste the token from your reset link"
+                    required
+                  />
                 </div>
-              </div>
+              )}
+
+              {tokenFromUrl && (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700 flex items-start space-x-2">
+                  <HiCheckCircle className="text-lg flex-shrink-0 mt-0.5" />
+                  <span>Reset link verified! Now enter your new password.</span>
+                </div>
+              )}
 
               <PasswordInput
                 id="reset-password"
@@ -209,7 +177,7 @@ export default function ResetPassword() {
 
               <button
                 type="submit"
-                disabled={loading || code.join('').length !== 6}
+                disabled={loading}
                 className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? (
@@ -221,25 +189,21 @@ export default function ResetPassword() {
                     <span>Resetting password...</span>
                   </span>
                 ) : (
-                  'Reset Password'
+                  'Set New Password'
                 )}
               </button>
             </form>
 
-            <div className="text-center mt-6 space-y-3">
-              <button
-                onClick={handleResendCode}
-                disabled={resending}
-                className="text-brand-gold font-medium hover:text-yellow-700 transition-colors text-sm disabled:opacity-50"
-              >
-                {resending ? 'Sending...' : "Didn't receive the code? Resend"}
-              </button>
-
-              <div>
-                <Link to="/login" className="text-gray-500 hover:text-brand-navy text-sm transition-colors">
-                  Back to Login
+            <div className="text-center mt-6 space-y-2">
+              <p className="text-sm text-gray-600">
+                Remember your password?{' '}
+                <Link to="/login" className="text-brand-gold font-semibold hover:text-yellow-700">
+                  Sign In
                 </Link>
-              </div>
+              </p>
+              <Link to="/login" className="text-gray-500 hover:text-brand-navy text-sm transition-colors block">
+                Back to Login
+              </Link>
             </div>
           </div>
         </div>
