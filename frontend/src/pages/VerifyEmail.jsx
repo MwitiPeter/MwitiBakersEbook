@@ -144,11 +144,6 @@ export default function VerifyEmail() {
     setError('');
     try {
       const { data } = await API.post('/auth/resend-link', { email });
-      if (data.autoVerified) {
-        setMessage(data.message || 'Email automatically verified!');
-        setTimeout(() => navigate('/login'), 2000);
-        return;
-      }
       setMessage(data.message || 'A new verification link has been sent!');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to resend verification link');

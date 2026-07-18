@@ -67,12 +67,11 @@ router.post(
       const verificationLink = `${FRONTEND_URL}/verify-email?token=${rawToken}&pending=true`;
       const result = await sendAuthLink(normalizedEmail, 'there', verificationLink, 'verify');
 
-      // If email service isn't configured, auto-verify in dev mode
+      // If email service is unavailable, return an error — user must click the link
       if (result && !result.sent) {
-        return res.json({
-          devMode: true,
-          rawToken,
-          message: 'Email service unavailable. Verification token provided for development.',
+        console.error('Failed to send verification email to:', normalizedEmail);
+        return res.status(503).json({
+          message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
           warnings: validation.warnings,
           suggestion: validation.suggestion,
         });
@@ -263,25 +262,8 @@ router.post(
         const result = await sendAuthLink(email, existingUser.name, verificationLink, 'verify');
 
         if (result && !result.sent) {
-          existingUser.isVerified = true;
-          existingUser.emailVerificationToken = undefined;
-          existingUser.emailVerificationTokenExpires = undefined;
-          await existingUser.save();
-
-          const token = generateToken(existingUser);
-          return res.json({
-            token,
-            autoVerified: true,
-            message:
-              'Account created! (Unable to send verification email. You are automatically verified.)',
-            user: {
-              id: existingUser._id,
-              name: existingUser.name,
-              email: existingUser.email,
-              role: existingUser.role,
-              isVerified: existingUser.isVerified,
-              notificationsEnabled: existingUser.notificationsEnabled,
-            },
+          return res.status(503).json({
+            message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
           });
         }
 
@@ -300,25 +282,8 @@ router.post(
       const result = await sendAuthLink(normalizedEmail, name, verificationLink, 'verify');
 
       if (result && !result.sent) {
-        user.isVerified = true;
-        user.emailVerificationToken = undefined;
-        user.emailVerificationTokenExpires = undefined;
-        await user.save();
-
-        const token = generateToken(user);
-        return res.status(201).json({
-          token,
-          autoVerified: true,
-          message:
-            'Account created! (Email verification not configured. You are automatically verified.)',
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            isVerified: user.isVerified,
-            notificationsEnabled: user.notificationsEnabled,
-          },
+        return res.status(503).json({
+          message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
         });
       }
 
@@ -420,14 +385,8 @@ router.post(
         const result = await sendAuthLink(normalizedEmail, user.name, verificationLink, 'verify');
 
         if (result && !result.sent) {
-          user.isVerified = true;
-          user.emailVerificationToken = undefined;
-          user.emailVerificationTokenExpires = undefined;
-          await user.save();
-
-          return res.json({
-            autoVerified: true,
-            message: 'Email automatically verified (unable to send verification email). You can now log in.',
+          return res.status(503).json({
+            message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
           });
         }
 
@@ -446,10 +405,8 @@ router.post(
       const result = await sendAuthLink(normalizedEmail, 'there', verificationLink, 'verify');
 
       if (result && !result.sent) {
-        return res.json({
-          devMode: true,
-          rawToken,
-          message: 'Email service unavailable. Verification token provided for development.',
+        return res.status(503).json({
+          message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
         });
       }
 
@@ -498,27 +455,8 @@ router.post(
         const result = await sendAuthLink(email, user.name, verificationLink, 'verify');
 
         if (result && !result.sent) {
-          user.isVerified = true;
-          user.emailVerificationToken = undefined;
-          user.emailVerificationTokenExpires = undefined;
-          user.lastLogin = new Date();
-          await user.save();
-
-          const token = generateToken(user);
-          return res.json({
-            token,
-            autoVerified: true,
-            message:
-              'Logged in! (Unable to send verification email. You are automatically verified.)',
-            user: {
-              id: user._id,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-              isVerified: user.isVerified,
-              notificationsEnabled: user.notificationsEnabled,
-              lastLogin: user.lastLogin,
-            },
+          return res.status(503).json({
+            message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
           });
         }
 

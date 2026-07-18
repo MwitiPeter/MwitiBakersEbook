@@ -53,20 +53,11 @@ export default function Signup() {
     try {
       const { data } = await API.post('/auth/initiate-verification', { email });
 
-      if (data.devMode && data.rawToken) {
-        // Email unavailable — auto-verify with the raw token
-        setPendingToken(data.rawToken);
-        setEmailVerified(true);
-        setVerificationSent(true);
-        return;
-      }
-
       if (data.suggestion) {
         setWarnings([`Did you mean ${data.suggestion}?`]);
       }
 
       setVerificationSent(true);
-      setPendingToken('');
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to send verification. Please try again.';
       setError(msg);
@@ -76,22 +67,6 @@ export default function Signup() {
       }
     } finally {
       setSendingVerification(false);
-    }
-  };
-
-  // --- Step 1b: Check verification status (called after user clicks link) ---
-  const handleCheckVerification = async () => {
-    if (!pendingToken) return;
-    setError('');
-    try {
-      const { data } = await API.post('/auth/verify-pending', { token: pendingToken });
-      if (data.verified) {
-        setEmailVerified(true);
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Verification failed. Please request a new link.');
-      setPendingToken('');
-      setVerificationSent(false);
     }
   };
 
@@ -165,15 +140,9 @@ export default function Signup() {
               <h2 className="text-xl font-bold text-brand-navy mb-2">Verify your email</h2>
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">
                 We sent a verification link to <strong>{email}</strong>.
-                Click the link in the email to verify your address, then return here to
-                complete your account setup.
+                Click the link in the email to verify your address. Once verified, you'll be
+                redirected here to complete your account setup.
               </p>
-
-              {pendingToken && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-xs text-amber-700 text-left">
-                  <strong>Development mode:</strong> A verification token is available. Click the button below to verify.
-                </div>
-              )}
 
               {warnings.length > 0 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 mb-4 text-xs text-yellow-700 text-left">
@@ -185,18 +154,9 @@ export default function Signup() {
                 💡 <strong>Tip:</strong> If you don't see the email in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
               </div>
 
-              {pendingToken ? (
-                <button
-                  onClick={handleCheckVerification}
-                  className="btn-primary w-full mb-3"
-                >
-                  I've Verified My Email — Continue
-                </button>
-              ) : (
-                <p className="text-sm text-gray-500 mb-4">
-                  Once you've clicked the link in your email, you'll be able to set up your account.
-                </p>
-              )}
+              <p className="text-sm text-gray-500 mb-6">
+                Once you've clicked the link in your email, you'll automatically be able to set up your account.
+              </p>
 
               <button
                 onClick={handleInitiateVerification}
