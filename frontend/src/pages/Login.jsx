@@ -34,7 +34,11 @@ export default function Login() {
         navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
         return;
       }
-      setError(responseData?.message || 'Login failed. Please try again.');
+      if (responseData?.locked && responseData?.minutesRemaining) {
+        setError(`🔒 Your account is locked. Too many failed attempts. Please try again in ${responseData.minutesRemaining} minute(s).`);
+      } else {
+        setError(responseData?.message || 'Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

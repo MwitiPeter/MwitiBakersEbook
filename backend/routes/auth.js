@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const PendingVerification = require('../models/PendingVerification');
@@ -11,6 +12,54 @@ const { validateEmail } = require('../lib/emailValidator');
 const router = express.Router();
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+// Rate limiters (per IP)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: { message: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const emailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3,
+  message: { message: 'Too many requests. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.body.email || req.ip, // Rate limit by email address
+});
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  message: { message: 'Too many password reset requests. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.body.email || req.ip,
+});
+
+const ACCOUNT_LOCK_MINUTES = 15;
+const MAX_LOGIN_ATTEMPTS = 5;
+
+// Password strength validation helper
+const validatePasswordStrength = (password) => {
+  const errors = [];
+  if (!password || password.length < 8) {
+    errors.push('Password must be at least 8 characters');
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push('Password must contain an uppercase letter');
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push('Password must contain a lowercase letter');
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push('Password must contain a number');
+  }
+  return errors;
+};
 
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
@@ -23,6 +72,7 @@ const generateToken = (user) => {
 // =====================================================
 router.post(
   '/initiate-verification',
+  emailLimiter,
   [body('email').isEmail().withMessage('A valid email address is required')],
   async (req, res) => {
     try {
@@ -137,7 +187,14 @@ router.post(
   [
     body('token').notEmpty().withMessage('Verification token is required'),
     body('name').trim().notEmpty().withMessage('Name is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+    body('password').custom((value) => {
+      const errors = validatePasswordStrength(value);
+      if (errors.length > 0) {
+        throw new Error(errors.join('. '));
+      }
+      return true;
+    }),
   ],
   async (req, res) => {
     try {
@@ -230,26 +287,32 @@ router.post(
   '/signup',
   [
     body('name').trim().notEmpty().withMessage('Name is required'),
-    body('email').isEmail().withMessage('Valid email is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  ],
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
+    body('email').isEmail().withMessage('Valid email is required'),      body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+      body('password').custom((value) => {
+        const errors = validatePasswordStrength(value);
+        if (errors.length > 0) {
+          throw new Error(errors.join('. '));
+        }
+        return true;
+      }),
+    ],
+    async (req, res) => {
+      try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(400).json({ errors: errors.array() });
+        }
 
-      const { name, email, password, notificationsEnabled } = req.body;
-      const normalizedEmail = email.toLowerCase().trim();
+        const { name, email, password, notificationsEnabled } = req.body;
+        const normalizedEmail = email.toLowerCase().trim();
 
-      // Validate email (MX, disposable, format)
-      const validation = await validateEmail(normalizedEmail);
-      if (!validation.valid) {
-        return res.status(400).json({ message: validation.errors[0] });
-      }
+        // Validate email (MX, disposable, format)
+        const validation = await validateEmail(normalizedEmail);
+        if (!validation.valid) {
+          return res.status(400).json({ message: validation.errors[0] });
+        }
 
-      const existingUser = await User.findOne({ email: normalizedEmail });
+        const existingUser = await User.findOne({ email: normalizedEmail });
       if (existingUser) {
         if (existingUser.isVerified) {
           return res.status(400).json({ message: 'Email already registered' });
@@ -353,6 +416,7 @@ router.post(
 // Resend verification link
 router.post(
   '/resend-link',
+  emailLimiter,
   [body('email').isEmail().withMessage('Valid email is required')],
   async (req, res) => {
     try {
@@ -423,6 +487,7 @@ router.post(
 // Login
 router.post(
   '/login',
+  loginLimiter,
   [
     body('email').isEmail().withMessage('Valid email is required'),
     body('password').notEmpty().withMessage('Password is required'),
@@ -437,14 +502,48 @@ router.post(
       const { email, password } = req.body;
       const user = await User.findOne({ email }).select('+password');
 
+      // Check if account is locked
+      if (user && user.lockUntil && user.lockUntil > new Date()) {
+        const minutesRemaining = Math.ceil((user.lockUntil - new Date()) / 60000);
+        return res.status(429).json({
+          message: `Account temporarily locked. Too many failed attempts. Try again in ${minutesRemaining} minute(s).`,
+          locked: true,
+          minutesRemaining,
+        });
+      }
+
       if (!user) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       const isMatch = await user.comparePassword(password);
+
       if (!isMatch) {
-        return res.status(401).json({ message: 'Invalid email or password' });
+        // Increment login attempts
+        user.loginAttempts = (user.loginAttempts || 0) + 1;
+
+        if (user.loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+          user.lockUntil = new Date(Date.now() + ACCOUNT_LOCK_MINUTES * 60 * 1000);
+          user.loginAttempts = 0;
+          await user.save();
+          return res.status(429).json({
+            message: `Account locked for ${ACCOUNT_LOCK_MINUTES} minutes due to too many failed attempts.`,
+            locked: true,
+            minutesRemaining: ACCOUNT_LOCK_MINUTES,
+          });
+        }
+
+        await user.save();
+        const remaining = MAX_LOGIN_ATTEMPTS - user.loginAttempts;
+        return res.status(401).json({
+          message: `Invalid email or password. ${remaining} attempt(s) remaining before your account is temporarily locked.`,
+          remainingAttempts: remaining,
+        });
       }
+
+      // Successful login — reset attempt counter
+      user.loginAttempts = 0;
+      user.lockUntil = null;
 
       if (!user.isVerified) {
         // Send a fresh verification link
@@ -509,6 +608,7 @@ router.get('/me', auth, async (req, res) => {
 // Request password reset (sends reset link to email)
 router.post(
   '/forgot-password',
+  forgotPasswordLimiter,
   [body('email').isEmail().withMessage('Valid email is required')],
   async (req, res) => {
     try {
@@ -544,13 +644,9 @@ router.post(
       const result = await sendAuthLink(normalizedEmail, user.name, resetLink, 'reset');
 
       if (result && !result.sent) {
-        console.log(`\n🔑 Password reset link for ${email}: ${resetLink} (not sent — email unavailable)`);
-
-        return res.json({
-          message: 'Email service unavailable. Redirecting to password reset...',
-          email: normalizedEmail,
-          rawToken,
-          devMode: true,
+        console.error('Failed to send password reset email to:', normalizedEmail);
+        return res.status(503).json({
+          message: 'Unable to send password reset email. Our email service is currently unavailable. Please try again later.',
         });
       }
 

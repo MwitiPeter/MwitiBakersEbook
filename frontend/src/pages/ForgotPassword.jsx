@@ -26,17 +26,8 @@ export default function ForgotPassword() {
     try {
       const { data } = await API.post('/auth/forgot-password', { email });
 
-      if (data.devMode && data.rawToken) {
-        // Email unavailable — redirect straight to reset with the raw token
-        navigate(`/reset-password?token=${data.rawToken}`);
-      } else if (data.requiresVerification) {
-        // User is not yet verified — send them to verify page
-        setError(data.message || 'Please verify your email first.');
-        navigate(`/verify-email?email=${encodeURIComponent(email)}`);
-      } else {
-        setMessage(data.message || 'A password reset link has been sent to your email.');
-        setSent(true);
-      }
+      setMessage(data.message || 'A password reset link has been sent to your email.');
+      setSent(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send reset link. Please try again.');
     } finally {
