@@ -1,50 +1,58 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '../context/NavigationContext';
 import SEO from '../components/SEO';
 import { HiBookOpen, HiPlay, HiArrowRight, HiExternalLink } from 'react-icons/hi';
 import { useState, useEffect } from 'react';
 import API from '../api/axios';
+import { fetchWithCache } from '../api/cache';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { endNavigation } = useNavigation();
   const [stats, setStats] = useState({ recipeBooks: 0, trainingVideos: 0 });
   const [purchasedItems, setPurchasedItems] = useState({ recipeBooks: [], trainingVideos: [] });
   const [recentPurchases, setRecentPurchases] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
+    endNavigation();
+    
     const fetchData = async () => {
       try {
-        const [booksRes, videosRes, paymentsRes, userRes] = await Promise.all([
-          API.get('/recipe-books'),
-          API.get('/training-videos'),
+        // Fetch in parallel with caching for speed
+        const [booksRes, videosRes, paymentsRes] = await Promise.all([
+          fetchWithCache(API, '/recipe-books'),
+          fetchWithCache(API, '/training-videos'),
           API.get('/payments/history'),
-          API.get('/auth/me'),
         ]);
 
-        const allBooks = booksRes.data;
-        const allVideos = videosRes.data;
-        const purchasedIds = userRes.data.purchasedItems;
+        const allBooks = booksRes.data || [];
+        const allVideos = videosRes.data || [];
 
         setStats({
           recipeBooks: allBooks.length,
           trainingVideos: allVideos.length,
         });
 
-        // Filter purchased items with full data
-        if (purchasedIds) {
+        // Use user data from AuthContext instead of fetching /auth/me again
+        if (user?.purchasedItems) {
+          const purchasedIds = user.purchasedItems;
           setPurchasedItems({
             recipeBooks: allBooks.filter((book) => purchasedIds.recipeBooks?.some((id) => id._id === book._id || id === book._id)),
             trainingVideos: allVideos.filter((video) => purchasedIds.trainingVideos?.some((id) => id._id === video._id || id === video._id)),
           });
         }
 
-        setRecentPurchases(paymentsRes.data);
+        setRecentPurchases(paymentsRes.data || []);
       } catch (err) {
         console.error('Dashboard data error:', err);
+      } finally {
+        setDataLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPurchasedCount = (type) => purchasedItems[type]?.length || 0;
 

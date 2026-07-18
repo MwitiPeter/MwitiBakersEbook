@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '../context/NavigationContext';
 import API from '../api/axios';
+import { fetchWithCache } from '../api/cache';
 import ImageWithFallback from '../components/ImageWithFallback';
 import SEO from '../components/SEO';
 import { HiLockClosed, HiDownload, HiEye, HiX, HiBookOpen } from 'react-icons/hi';
 
 export default function RecipeBooks() {
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const { endNavigation } = useNavigation();
   const redirectItemId = searchParams.get('itemId');
 
   const [books, setBooks] = useState([]);
@@ -17,12 +22,15 @@ export default function RecipeBooks() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    endNavigation();
+
     const fetchBooks = async () => {
       try {
-        const { data } = await API.get('/recipe-books');
+        const { data } = await fetchWithCache(API, '/recipe-books');
         setBooks(data);
-        const userRes = await API.get('/auth/me');
-        const ids = userRes.data.purchasedItems?.recipeBooks?.map((b) => b._id || b) || [];
+        
+        // Use cached user data from AuthContext
+        const ids = user?.purchasedItems?.recipeBooks?.map((b) => b._id || b) || [];
         setPurchasedIds(ids);
 
         // If redirected from payment callback, auto-open the purchased item
@@ -39,7 +47,7 @@ export default function RecipeBooks() {
       }
     };
     fetchBooks();
-  }, [redirectItemId]);
+  }, [redirectItemId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePurchase = async (book) => {
     setError('');

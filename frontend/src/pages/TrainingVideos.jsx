@@ -1,12 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '../context/NavigationContext';
 import API from '../api/axios';
+import { fetchWithCache } from '../api/cache';
 import ImageWithFallback from '../components/ImageWithFallback';
 import SEO from '../components/SEO';
 import { HiLockClosed, HiPlay, HiX, HiClock, HiExclamationCircle } from 'react-icons/hi';
 
 export default function TrainingVideos() {
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const { endNavigation } = useNavigation();
   const redirectItemId = searchParams.get('itemId');
 
   const [videos, setVideos] = useState([]);
@@ -19,12 +24,15 @@ export default function TrainingVideos() {
   const videoRef = useRef(null);
 
   useEffect(() => {
+    endNavigation();
+
     const fetchVideos = async () => {
       try {
-        const { data } = await API.get('/training-videos');
+        const { data } = await fetchWithCache(API, '/training-videos');
         setVideos(data);
-        const userRes = await API.get('/auth/me');
-        const ids = userRes.data.purchasedItems?.trainingVideos?.map((v) => v._id || v) || [];
+        
+        // Use cached user data from AuthContext
+        const ids = user?.purchasedItems?.trainingVideos?.map((v) => v._id || v) || [];
         setPurchasedIds(ids);
 
         // If redirected from payment callback, auto-open the purchased item
@@ -41,7 +49,7 @@ export default function TrainingVideos() {
       }
     };
     fetchVideos();
-  }, [redirectItemId]);
+  }, [redirectItemId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePurchase = async (video) => {
     setError('');

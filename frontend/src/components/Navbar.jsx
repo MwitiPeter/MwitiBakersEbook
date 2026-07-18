@@ -1,15 +1,37 @@
 import { useState, memo, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '../context/NavigationContext';
 import { HiMenu, HiX, HiUser, HiLogout, HiCog } from 'react-icons/hi';
+
+// Preload page chunks on hover for instant navigation
+const PRELOAD_MAP = {
+  '/dashboard': 'dashboard',
+  '/recipe-books': 'recipeBooks',
+  '/training-videos': 'trainingVideos',
+  '/admin': 'admin',
+};
 
 function NavbarInner() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { startNavigation, endNavigation } = useNavigation();
   const [isOpen, setIsOpen] = useState(false);
 
   const isActive = useCallback((path) => location.pathname === path, [location.pathname]);
+
+  const handleNavClick = useCallback(() => {
+    startNavigation();
+  }, [startNavigation]);
+
+  // Preload on hover for instant page transitions
+  const handleNavHover = useCallback((path) => {
+    const preloadKey = PRELOAD_MAP[path];
+    if (preloadKey && window.__preload?.[preloadKey]) {
+      window.__preload[preloadKey]();
+    }
+  }, []);
 
   const navLinks = [
     { label: 'Home', path: '/' },
@@ -49,6 +71,8 @@ function NavbarInner() {
               <Link
                 key={link.path}
                 to={link.path}
+                onClick={handleNavClick}
+                onMouseEnter={() => handleNavHover(link.path)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive(link.path)
                     ? 'bg-brand-navy text-white'
@@ -66,6 +90,8 @@ function NavbarInner() {
               <>
                 <Link
                   to="/dashboard"
+                  onClick={handleNavClick}
+                  onMouseEnter={() => handleNavHover('/dashboard')}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive('/dashboard')
                       ? 'bg-brand-navy text-white'
@@ -78,6 +104,8 @@ function NavbarInner() {
                 {user.role === 'admin' && (
                   <Link
                     to="/admin"
+                    onClick={handleNavClick}
+                    onMouseEnter={() => handleNavHover('/admin')}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       location.pathname.startsWith('/admin')
                         ? 'bg-brand-gold text-white'
@@ -128,7 +156,8 @@ function NavbarInner() {
               <Link
                 key={link.path}
                 to={link.path}
-                onClick={() => setIsOpen(false)}
+                onClick={() => { setIsOpen(false); handleNavClick(); }}
+                onMouseEnter={() => handleNavHover(link.path)}
                 className={`block px-4 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] flex items-center ${
                   isActive(link.path)
                     ? 'bg-brand-navy text-white'

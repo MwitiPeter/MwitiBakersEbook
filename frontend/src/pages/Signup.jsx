@@ -1,27 +1,97 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import API from '../api/axios';
 import PasswordInput from '../components/PasswordInput';
 import SEO from '../components/SEO';
+import { HiCheckCircle, HiMail, HiExclamation } from 'react-icons/hi';
 
 export default function Signup() {
   const navigate = useNavigate();
   const { signup } = useAuth();
+
+  // Step 1: Email verification
+  const [email, setEmail] = useState('');
+  const [pendingToken, setPendingToken] = useState('');
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
+  const [warnings, setWarnings] = useState([]);
+
+  // Step 2: Account details
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     password: '',
     confirmPassword: '',
     notificationsEnabled: false,
   });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // --- Step 1: Send verification email ---
+  const handleInitiateVerification = async (e) => {
+    e.preventDefault();
+    setError('');
+    setWarnings([]);
+
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    setSendingVerification(true);
+    try {
+      const { data } = await API.post('/auth/initiate-verification', { email });
+
+      if (data.devMode && data.rawToken) {
+        // Email unavailable — auto-verify with the raw token
+        setPendingToken(data.rawToken);
+        setEmailVerified(true);
+        setVerificationSent(true);
+        return;
+      }
+
+      if (data.suggestion) {
+        setWarnings([`Did you mean ${data.suggestion}?`]);
+      }
+
+      setVerificationSent(true);
+      setPendingToken('');
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to send verification. Please try again.';
+      setError(msg);
+      // Also show warnings/suggestions from the API
+      if (err.response?.data?.suggestion) {
+        setWarnings([`Did you mean ${err.response.data.suggestion}?`]);
+      }
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
+  // --- Step 1b: Check verification status (called after user clicks link) ---
+  const handleCheckVerification = async () => {
+    if (!pendingToken) return;
+    setError('');
+    try {
+      const { data } = await API.post('/auth/verify-pending', { token: pendingToken });
+      if (data.verified) {
+        setEmailVerified(true);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Verification failed. Please request a new link.');
+      setPendingToken('');
+      setVerificationSent(false);
+    }
+  };
+
+  // --- Step 2: Complete signup ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.name || !formData.password || !formData.confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
@@ -38,28 +108,214 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      const data = await signup(formData.name, formData.email, formData.password, formData.notificationsEnabled);
-      if (data.requiresVerification) {
-        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
-      } else {
-        navigate('/dashboard');
-      }
+      const { data } = await API.post('/auth/complete-signup', {
+        token: pendingToken,
+        name: formData.name,
+        password: formData.password,
+        notificationsEnabled: formData.notificationsEnabled,
+      });
+
+      // Store token and set user
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      navigate('/dashboard');
     } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        err.response?.data?.errors?.[0]?.msg ||
-        'Signup failed. Please try again.';
-      // If user already exists but unverified, redirect to verification
-      if (err.response?.data?.requiresVerification) {
-        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
-        return;
-      }
-      setError(msg);
+      setError(err.response?.data?.message || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  // --- Render Steps ---
+
+  // Show verification sent state (waiting for user to click link)
+  if (verificationSent && !emailVerified) {
+    return (
+      <>
+        <SEO
+          title="Verify Email"
+          description="Check your email to verify your Mwiti Bakers account."
+          url="https://mwitibakers.com/signup"
+          noindex
+        />
+        <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-md animate-fade-in">
+            <div className="text-center mb-8">
+              <img
+                src="/New.jpg"
+                alt="Mwiti Bakers - Premium Baking Content Logo"
+                className="h-16 sm:h-20 w-auto mx-auto mb-4 object-contain"
+                loading="eager"
+                decoding="async"
+              />
+              <h1 className="text-3xl font-bold text-brand-navy mt-2">Check Your Email</h1>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+              <div className="text-6xl mb-4">📧</div>
+              <h2 className="text-xl font-bold text-brand-navy mb-2">Verify your email</h2>
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                We sent a verification link to <strong>{email}</strong>.
+                Click the link in the email to verify your address, then return here to
+                complete your account setup.
+              </p>
+
+              {pendingToken && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-xs text-amber-700 text-left">
+                  <strong>Development mode:</strong> A verification token is available. Click the button below to verify.
+                </div>
+              )}
+
+              {warnings.length > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 mb-4 text-xs text-yellow-700 text-left">
+                  {warnings.map((w, i) => <p key={i}>{w}</p>)}
+                </div>
+              )}
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700 text-left">
+                💡 <strong>Tip:</strong> If you don't see the email in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
+              </div>
+
+              {pendingToken ? (
+                <button
+                  onClick={handleCheckVerification}
+                  className="btn-primary w-full mb-3"
+                >
+                  I've Verified My Email — Continue
+                </button>
+              ) : (
+                <p className="text-sm text-gray-500 mb-4">
+                  Once you've clicked the link in your email, you'll be able to set up your account.
+                </p>
+              )}
+
+              <button
+                onClick={handleInitiateVerification}
+                disabled={sendingVerification}
+                className="text-brand-gold font-medium hover:text-yellow-700 transition-colors text-sm disabled:opacity-50"
+              >
+                {sendingVerification ? 'Sending...' : 'Resend verification link'}
+              </button>
+
+              <div className="mt-4">
+                <Link to="/login" className="text-gray-500 hover:text-brand-navy text-sm transition-colors">
+                  Back to Login
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Email verified step — show account creation form
+  if (emailVerified) {
+    return (
+      <>
+        <SEO
+          title="Create Account"
+          description="Complete your Mwiti Bakers account setup."
+          url="https://mwitibakers.com/signup"
+          noindex
+        />
+        <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 animate-fade-in">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8">
+              <img
+                src="/New.jpg"
+                alt="Mwiti Bakers - Premium Baking Content Logo"
+                className="h-16 sm:h-20 w-auto mx-auto mb-4 object-contain"
+                loading="eager"
+                decoding="async"
+              />
+              <h1 className="text-3xl font-bold text-brand-navy mt-2">Create Your Account</h1>
+              <p className="text-gray-600 mt-1">Set up your profile to get started</p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-6 text-sm text-green-700 flex items-center space-x-2">
+                <HiCheckCircle className="text-lg flex-shrink-0" />
+                <span>Email <strong>{email}</strong> verified! Now set up your account.</span>
+              </div>
+
+              {error && (
+                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="input-field"
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
+
+                <PasswordInput
+                  id="signup-password"
+                  label="Password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="At least 6 characters"
+                  required
+                  minLength={6}
+                />
+
+                <PasswordInput
+                  id="signup-confirm-password"
+                  label="Confirm Password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  placeholder="Repeat your password"
+                  required
+                />
+
+                <div className="flex items-start space-x-3">
+                  <input
+                    id="notifications"
+                    type="checkbox"
+                    checked={formData.notificationsEnabled}
+                    onChange={(e) => setFormData({ ...formData, notificationsEnabled: e.target.checked })}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold cursor-pointer"
+                  />
+                  <label htmlFor="notifications" className="text-sm text-gray-600 cursor-pointer select-none">
+                    I'd like to receive email notifications about new recipe books, training videos, and exclusive baking tips.
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {loading ? (
+                    <span className="flex items-center space-x-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <span>Creating account...</span>
+                    </span>
+                  ) : (
+                    'Create Account'
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Initial state — email input form
   return (
     <>
       <SEO
@@ -69,111 +325,81 @@ export default function Signup() {
         noindex
       />
       <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <img
-            src="/New.jpg"
-            alt="Mwiti Bakers - Premium Baking Content Logo"
-            className="h-16 sm:h-20 w-auto mx-auto mb-4 object-contain"
-            loading="lazy"
-            decoding="async"
-          />
-          <h1 className="text-3xl font-bold text-brand-navy mt-2">Join Mwiti Bakers</h1>
-          <p className="text-gray-600 mt-1">Create your account and start baking</p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="input-field"
-                placeholder="John Doe"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="input-field"
-                placeholder="you@example.com"
-                required
-              />
-            </div>
-
-            <PasswordInput
-              id="signup-password"
-              label="Password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="At least 6 characters"
-              required
-              minLength={6}
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <img
+              src="/New.jpg"
+              alt="Mwiti Bakers - Premium Baking Content Logo"
+              className="h-16 sm:h-20 w-auto mx-auto mb-4 object-contain"
+              loading="eager"
+              decoding="async"
             />
+            <h1 className="text-3xl font-bold text-brand-navy mt-2">Join Mwiti Bakers</h1>
+            <p className="text-gray-600 mt-1">Start by verifying your email address</p>
+          </div>
 
-            <PasswordInput
-              id="signup-confirm-password"
-              label="Confirm Password"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              placeholder="Repeat your password"
-              required
-            />
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            {error && (
+              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm flex items-start space-x-2">
+                <HiExclamation className="text-lg flex-shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
 
-            <div className="flex items-start space-x-3">
-              <input
-                id="notifications"
-                type="checkbox"
-                checked={formData.notificationsEnabled}
-                onChange={(e) => setFormData({ ...formData, notificationsEnabled: e.target.checked })}
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold cursor-pointer"
-              />
-              <label htmlFor="notifications" className="text-sm text-gray-600 cursor-pointer select-none">
-                I'd like to receive <span className="font-medium text-brand-navy">email notifications</span> about new recipe books, training videos, and exclusive baking tips.
-              </label>
-            </div>
+            {warnings.length > 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 mb-4 text-xs text-yellow-700">
+                {warnings.map((w, i) => <p key={i}>{w}</p>)}
+              </div>
+            )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {loading ? (
-                <span className="flex items-center space-x-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <span>Creating account...</span>
-                </span>
-              ) : (
-                'Create Account'
-              )}
-            </button>
-          </form>
+            <form onSubmit={handleInitiateVerification} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <div className="relative">
+                  <HiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                    className="input-field pl-10"
+                    placeholder="you@example.com"
+                    required
+                    autoFocus
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-1.5">
+                  We'll send a verification link to this email. Disposable email addresses are not allowed.
+                </p>
+              </div>
 
-          <p className="text-center mt-6 text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="text-brand-gold font-semibold hover:text-yellow-700">
-              Sign In
-            </Link>
-          </p>
+              <button
+                type="submit"
+                disabled={sendingVerification}
+                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {sendingVerification ? (
+                  <span className="flex items-center space-x-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span>Sending verification...</span>
+                  </span>
+                ) : (
+                  'Send Verification Link'
+                )}
+              </button>
+            </form>
+
+            <p className="text-center mt-6 text-gray-600">
+              Already have an account?{' '}
+              <Link to="/login" className="text-brand-gold font-semibold hover:text-yellow-700">
+                Sign In
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }

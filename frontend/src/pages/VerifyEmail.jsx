@@ -9,6 +9,7 @@ export default function VerifyEmail() {
   const navigate = useNavigate();
   const email = searchParams.get('email') || '';
   const tokenFromUrl = searchParams.get('token') || '';
+  const isPending = searchParams.get('pending') === 'true';
 
   const [status, setStatus] = useState(tokenFromUrl ? 'verifying' : 'idle');
   const [error, setError] = useState('');
@@ -19,6 +20,29 @@ export default function VerifyEmail() {
   useEffect(() => {
     if (!tokenFromUrl) return;
 
+    // Handle pre-account verification (pending=true flow)
+    if (isPending) {
+      const verifyPending = async () => {
+        try {
+          const { data } = await API.post('/auth/verify-pending', { token: tokenFromUrl });
+          if (data.verified) {
+            setStatus('success');
+            setMessage('Email verified! Now complete your account setup.');
+            // Redirect to signup page with the token so user can complete registration
+            setTimeout(() => {
+              navigate('/signup');
+            }, 2000);
+          }
+        } catch (err) {
+          setStatus('error');
+          setError(err.response?.data?.message || 'Verification failed. The link may be expired or invalid.');
+        }
+      };
+      verifyPending();
+      return;
+    }
+
+    // Handle post-account verification (legacy flow)
     const verifyWithToken = async () => {
       try {
         const { data } = await API.post('/auth/verify-email', { token: tokenFromUrl });
@@ -39,7 +63,7 @@ export default function VerifyEmail() {
     };
 
     verifyWithToken();
-  }, [tokenFromUrl, navigate]);
+  }, [tokenFromUrl, isPending, navigate]);
 
   // If token is being verified, show a loading screen
   if (status === 'verifying') {
