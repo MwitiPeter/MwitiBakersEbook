@@ -20,7 +20,9 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
-      - key: GMAIL_USER
+      - key: RESEND_API_KEY
         sync: false
-      - key: GMAIL_APP_PASSWORD
-        sync: false
+      - key: RESEND_FROM_EMAIL
+        value: noreply@mwitibakers.com
+      - key: RESEND_FROM_NAME
+        value: Mwiti Bakers

@@ -117,11 +117,16 @@ router.post(
       const verificationLink = `${FRONTEND_URL}/verify-email?token=${rawToken}&pending=true`;
       const result = await sendAuthLink(normalizedEmail, 'there', verificationLink, 'verify');
 
-      // If email service is unavailable, return an error — user must click the link
+      // If email service is unavailable, return a simulated verification link
+      // so the user can still manually click to verify
       if (result && !result.sent) {
-        console.error('Failed to send verification email to:', normalizedEmail);
-        return res.status(503).json({
-          message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
+        console.log('\n📧 Verification link (not sent — email unavailable):');
+        console.log(`   ${verificationLink}\n`);
+        return res.json({
+          devMode: true,
+          rawToken,
+          verificationLink,
+          message: 'Email service unavailable. A verification link is available below for manual use.',
           warnings: validation.warnings,
           suggestion: validation.suggestion,
         });
@@ -446,13 +451,14 @@ router.post(
         await user.save();
 
         const verificationLink = `${FRONTEND_URL}/verify-email?token=${rawToken}`;
-        const result = await sendAuthLink(normalizedEmail, user.name, verificationLink, 'verify');
-
-        if (result && !result.sent) {
-          return res.status(503).json({
-            message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
-          });
-        }
+        const result = await sendAuthLink(normalizedEmail, user.name, verificationLink, 'verify');      if (result && !result.sent) {
+        return res.json({
+          devMode: true,
+          rawToken,
+          verificationLink,
+          message: 'A new verification link is available below.',
+        });
+      }
 
         return res.json({
           message: 'A new verification link has been sent to your email.',
@@ -469,8 +475,11 @@ router.post(
       const result = await sendAuthLink(normalizedEmail, 'there', verificationLink, 'verify');
 
       if (result && !result.sent) {
-        return res.status(503).json({
-          message: 'Unable to send verification email. Our email service is currently unavailable. Please try again later.',
+        return res.json({
+          devMode: true,
+          rawToken,
+          verificationLink,
+          message: 'A new verification link is available below.',
         });
       }
 

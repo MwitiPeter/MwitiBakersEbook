@@ -1,28 +1,18 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-let transporter = null;
+let resendClient = null;
 
-const getTransporter = () => {
-  if (transporter) return transporter;
+const getClient = () => {
+  if (resendClient) return resendClient;
 
-  const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
+  const apiKey = process.env.RESEND_API_KEY;
 
-  if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
+  if (!apiKey) {
     return null;
   }
 
-  transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: GMAIL_USER,
-      pass: GMAIL_APP_PASSWORD,
-    },
-    connectionTimeout: 5000,
-    greetingTimeout: 5000,
-    socketTimeout: 10000,
-  });
-
-  return transporter;
+  resendClient = new Resend(apiKey);
+  return resendClient;
 };
 
 /**
@@ -33,16 +23,16 @@ const getTransporter = () => {
  * @param {'verify'|'reset'} purpose - Email purpose
  */
 const sendAuthLink = async (email, name, link, purpose = 'verify') => {
-  const transport = getTransporter();
+  const client = getClient();
   const isReset = purpose === 'reset';
 
-  // If no Gmail credentials are configured, log the token to console
-  if (!transport) {
+  // If no Resend API key is configured, log the token to console
+  if (!client) {
     const token = new URL(link).searchParams.get('token');
     console.log(`\n📧 ${isReset ? 'Password reset' : 'Verification'} link for ${email}: ${link}`);
     console.log(`   Raw token: ${token}`);
-    console.log(`   Set GMAIL_USER and GMAIL_APP_PASSWORD in your env to enable email delivery.`);
-    console.log(`   To get a Gmail App Password: https://myaccount.google.com/apppasswords\n`);
+    console.log(`   Set RESEND_API_KEY in your env to enable email delivery.`);
+    console.log(`   Get your API key at: https://resend.com/api-keys\n`);
     return { sent: false };
   }
 
@@ -60,9 +50,12 @@ const sendAuthLink = async (email, name, link, purpose = 'verify') => {
     : "If you didn't create an account, you can safely ignore this email.";
 
   try {
-    const info = await transport.sendMail({
-      from: `"Mwiti Bakers" <${process.env.GMAIL_USER}>`,
-      to: email,
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@mwitibakers.com';
+    const fromName = process.env.RESEND_FROM_NAME || 'Mwiti Bakers';
+
+    const { data, error } = await client.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
       subject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
@@ -101,7 +94,12 @@ const sendAuthLink = async (email, name, link, purpose = 'verify') => {
       `,
     });
 
-    console.log(`Email sent to ${email} (messageId: ${info.messageId})`);
+    if (error) {
+      console.error('Resend error:', error);
+      return { sent: false };
+    }
+
+    console.log(`Email sent to ${email} (Resend id: ${data?.id})`);
     return { sent: true };
   } catch (err) {
     console.error('Failed to send email:', err);

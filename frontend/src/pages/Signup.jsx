@@ -18,6 +18,7 @@ export default function Signup() {
   const [verificationSent, setVerificationSent] = useState(!!searchParams.get('token'));
   const [sendingVerification, setSendingVerification] = useState(false);
   const [warnings, setWarnings] = useState([]);
+  const [devVerificationLink, setDevVerificationLink] = useState('');
 
   // If user arrived via email link (token in URL), clear URL params visually
   useEffect(() => {
@@ -52,6 +53,16 @@ export default function Signup() {
     setSendingVerification(true);
     try {
       const { data } = await API.post('/auth/initiate-verification', { email });
+
+      if (data.devMode && data.verificationLink) {
+        // Email unavailable — show the verification link on screen for manual clicking
+        setDevVerificationLink(data.verificationLink);
+        if (data.suggestion) {
+          setWarnings([`Did you mean ${data.suggestion}?`]);
+        }
+        setVerificationSent(true);
+        return;
+      }
 
       if (data.suggestion) {
         setWarnings([`Did you mean ${data.suggestion}?`]);
@@ -136,27 +147,48 @@ export default function Signup() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-              <div className="text-6xl mb-4">📧</div>
-              <h2 className="text-xl font-bold text-brand-navy mb-2">Verify your email</h2>
-              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-                We sent a verification link to <strong>{email}</strong>.
-                Click the link in the email to verify your address. Once verified, you'll be
-                redirected here to complete your account setup.
-              </p>
+              {devVerificationLink ? (
+                <>
+                  <div className="text-6xl mb-4">🔗</div>
+                  <h2 className="text-xl font-bold text-brand-navy mb-2">Verify your email</h2>
+                  <p className="text-gray-500 text-sm mb-4 leading-relaxed">
+                    Our email service is not configured yet. Click the link below to verify your email:
+                  </p>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                    <a
+                      href={devVerificationLink}
+                      className="text-brand-navy font-semibold text-sm underline hover:text-brand-gold transition-colors break-all"
+                    >
+                      {devVerificationLink}
+                    </a>
+                  </div>
+
+                  <p className="text-xs text-gray-400 mb-6">
+                    Once you click the link and verify, you'll be redirected to complete your account setup.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-6xl mb-4">📧</div>
+                  <h2 className="text-xl font-bold text-brand-navy mb-2">Verify your email</h2>
+                  <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                    We sent a verification link to <strong>{email}</strong>.
+                    Click the link in the email to verify your address. Once verified, you'll be
+                    redirected here to complete your account setup.
+                  </p>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700 text-left">
+                    💡 <strong>Tip:</strong> If you don't see the email in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
+                  </div>
+                </>
+              )}
 
               {warnings.length > 0 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 mb-4 text-xs text-yellow-700 text-left">
                   {warnings.map((w, i) => <p key={i}>{w}</p>)}
                 </div>
               )}
-
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700 text-left">
-                💡 <strong>Tip:</strong> If you don't see the email in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
-              </div>
-
-              <p className="text-sm text-gray-500 mb-6">
-                Once you've clicked the link in your email, you'll automatically be able to set up your account.
-              </p>
 
               <button
                 onClick={handleInitiateVerification}

@@ -135,6 +135,8 @@ export default function VerifyEmail() {
   }
 
   // Normal state — user needs to check email (no token in URL)
+  const [devLink, setDevLink] = useState('');
+
   const handleResendLink = async () => {
     if (!email) {
       setError('No email address provided. Please sign up again.');
@@ -144,9 +146,16 @@ export default function VerifyEmail() {
     setError('');
     try {
       const { data } = await API.post('/auth/resend-link', { email });
-      setMessage(data.message || 'A new verification link has been sent!');
+      if (data.devMode && data.verificationLink) {
+        setDevLink(data.verificationLink);
+        setMessage('A verification link is available below:');
+      } else {
+        setMessage(data.message || 'A new verification link has been sent!');
+        setDevLink('');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to resend verification link');
+      setDevLink('');
     } finally {
       setLoading(false);
     }
@@ -193,14 +202,32 @@ export default function VerifyEmail() {
 
           <div className="text-6xl mb-4">📧</div>
           <h2 className="text-xl font-bold text-brand-navy mb-2">Verify your email address</h2>
-          <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-            Click the link in the email we sent to <strong>{email || 'your email'}</strong> to activate your account.
-            The link expires in <strong>24 hours</strong>.
-          </p>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700 text-left">
-            💡 <strong>Tip:</strong> If you don't see the email in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
-          </div>
+          {devLink ? (
+            <div className="mb-6">
+              <p className="text-gray-500 text-sm mb-4 leading-relaxed">
+                Click the link below to verify your email:
+              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <a
+                  href={devLink}
+                  className="text-brand-navy font-semibold text-sm underline hover:text-brand-gold transition-colors break-all"
+                >
+                  {devLink}
+                </a>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                Click the link in the email we sent to <strong>{email || 'your email'}</strong> to activate your account.
+                The link expires in <strong>24 hours</strong>.
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-xs text-amber-700 text-left">
+                💡 <strong>Tip:</strong> If you don't see the email in your inbox, please check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
+              </div>
+            </>
+          )}
 
           <button
             onClick={handleResendLink}
