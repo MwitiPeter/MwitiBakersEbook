@@ -27,11 +27,11 @@ export default function VerifyEmail() {
           const { data } = await API.post('/auth/verify-pending', { token: tokenFromUrl });
           if (data.verified) {
             setStatus('success');
-            setMessage('Email verified! Now complete your account setup.');
-            // Redirect to signup page with the token so user can complete registration
+            setMessage('Email verified! Redirecting to complete your account setup...');
+            // Redirect to signup page with token and email so user can complete registration
             setTimeout(() => {
-              navigate('/signup');
-            }, 2000);
+              navigate(`/signup?token=${encodeURIComponent(tokenFromUrl)}&email=${encodeURIComponent(data.email)}`);
+            }, 1500);
           }
         } catch (err) {
           setStatus('error');

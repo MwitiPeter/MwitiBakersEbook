@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
 import PasswordInput from '../components/PasswordInput';
@@ -8,15 +8,24 @@ import { HiCheckCircle, HiMail, HiExclamation } from 'react-icons/hi';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signup } = useAuth();
 
   // Step 1: Email verification
-  const [email, setEmail] = useState('');
-  const [pendingToken, setPendingToken] = useState('');
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [verificationSent, setVerificationSent] = useState(false);
+  const [email, setEmail] = useState(searchParams.get('email') || '');
+  const [pendingToken, setPendingToken] = useState(searchParams.get('token') || '');
+  const [emailVerified, setEmailVerified] = useState(!!searchParams.get('token'));
+  const [verificationSent, setVerificationSent] = useState(!!searchParams.get('token'));
   const [sendingVerification, setSendingVerification] = useState(false);
   const [warnings, setWarnings] = useState([]);
+
+  // If user arrived via email link (token in URL), clear URL params visually
+  useEffect(() => {
+    if (searchParams.get('token')) {
+      // Clean up the URL without reloading the page
+      window.history.replaceState({}, '', '/signup');
+    }
+  }, [searchParams]);
 
   // Step 2: Account details
   const [formData, setFormData] = useState({
