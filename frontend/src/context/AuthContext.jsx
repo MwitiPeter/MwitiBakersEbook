@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import API from '../api/axios';
+import { clearAuthSession, setAuthSession } from '../api/authSession';
 
 const AuthContext = createContext(null);
 
@@ -16,10 +17,10 @@ export function AuthProvider({ children }) {
 
     try {
       const { data } = await API.get('/auth/me');
+      setAuthSession({ user: data });
       setUser(data);
     } catch {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      clearAuthSession();
       setUser(null);
     } finally {
       setLoading(false);
@@ -38,8 +39,7 @@ export function AuthProvider({ children }) {
       return data;
     }
 
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    setAuthSession({ token: data.token, user: data.user });
     setUser(data.user);
     return data;
   };
@@ -52,15 +52,13 @@ export function AuthProvider({ children }) {
       return data;
     }
 
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    setAuthSession({ token: data.token, user: data.user });
     setUser(data.user);
     return data;
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearAuthSession();
     setUser(null);
   };
 

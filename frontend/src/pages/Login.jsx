@@ -12,6 +12,25 @@ export default function Login() {
   const [devLink, setDevLink] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleAuthOutcome = (data) => {
+    if (data.devMode && data.verificationLink) {
+      setDevLink(data.verificationLink);
+      setError(data.message || 'A verification link is available below. Click it to verify your email.');
+      return true;
+    }
+
+    if (data.nextStep === 'verify-email' || data.requiresVerification) {
+      redirectToVerification();
+      return true;
+    }
+
+    return false;
+  };
+
+  const redirectToVerification = () => {
+    navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -25,20 +44,12 @@ export default function Login() {
     setLoading(true);
     try {
       const data = await login(formData.email, formData.password);
-      if (data.devMode && data.verificationLink) {
-        setDevLink(data.verificationLink);
-        setError(data.message || 'A verification link is available below. Click it to verify your email.');
-        return;
+      if (!handleAuthOutcome(data)) {
+        navigate('/dashboard');
       }
-      if (data.requiresVerification) {
-        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
-        return;
-      }
-      navigate('/dashboard');
     } catch (err) {
       const responseData = err.response?.data;
-      if (responseData?.requiresVerification) {
-        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+      if (handleAuthOutcome(responseData || {})) {
         return;
       }
       if (responseData?.locked && responseData?.minutesRemaining) {
