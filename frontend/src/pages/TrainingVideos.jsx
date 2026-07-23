@@ -13,6 +13,8 @@ export default function TrainingVideos() {
   const { user } = useAuth();
   const { endNavigation } = useNavigation();
   const redirectItemId = searchParams.get('itemId');
+  const autoUnlock = searchParams.get('unlocked') === '1';
+  const autoOpenedRef = useRef(false);
 
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +51,29 @@ export default function TrainingVideos() {
       }
     };
     fetchVideos();
-  }, [redirectItemId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [redirectItemId, endNavigation, user]);
+
+  useEffect(() => {
+    if (!autoUnlock || !redirectItemId || !videos.length || autoOpenedRef.current) {
+      return;
+    }
+
+    const openUnlockedVideo = async () => {
+      const target = videos.find((video) => video._id === redirectItemId);
+      if (!target) return;
+
+      autoOpenedRef.current = true;
+      try {
+        const { data } = await API.get(`/training-videos/${target._id}/unlock`);
+        setSelectedVideo(data);
+      } catch (err) {
+        console.error('Error auto-unlocking video after payment:', err);
+        setSelectedVideo({ ...target, isLocked: true });
+      }
+    };
+
+    openUnlockedVideo();
+  }, [autoUnlock, redirectItemId, videos]);
 
   const handlePurchase = async (video) => {
     setError('');

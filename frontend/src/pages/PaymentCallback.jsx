@@ -19,9 +19,9 @@ export default function PaymentCallback() {
     if (itemType && itemId) {
       switch (itemType) {
         case 'recipeBook':
-          return `/recipe-books?itemId=${itemId}`;
+          return `/recipe-books?itemId=${itemId}&unlocked=1`;
         case 'trainingVideo':
-          return `/training-videos?itemId=${itemId}`;
+          return `/training-videos?itemId=${itemId}&unlocked=1`;
         default:
           return '/dashboard';
       }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
@@ -13,6 +13,8 @@ export default function RecipeBooks() {
   const { user } = useAuth();
   const { endNavigation } = useNavigation();
   const redirectItemId = searchParams.get('itemId');
+  const autoUnlock = searchParams.get('unlocked') === '1';
+  const autoOpenedRef = useRef(false);
 
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,29 @@ export default function RecipeBooks() {
       }
     };
     fetchBooks();
-  }, [redirectItemId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [redirectItemId, endNavigation, user]);
+
+  useEffect(() => {
+    if (!autoUnlock || !redirectItemId || !books.length || autoOpenedRef.current) {
+      return;
+    }
+
+    const openUnlockedBook = async () => {
+      const target = books.find((book) => book._id === redirectItemId);
+      if (!target) return;
+
+      autoOpenedRef.current = true;
+      try {
+        const { data } = await API.get(`/recipe-books/${target._id}/unlock`);
+        setSelectedBook(data);
+      } catch (err) {
+        console.error('Error auto-unlocking book after payment:', err);
+        setSelectedBook({ ...target, isLocked: true });
+      }
+    };
+
+    openUnlockedBook();
+  }, [autoUnlock, redirectItemId, books]);
 
   const handlePurchase = async (book) => {
     setError('');
@@ -73,7 +97,7 @@ export default function RecipeBooks() {
         console.error('Error unlocking book:', err);
       }
     } else {
-      setSelectedBook({ ...book, isLocked: true });
+        setSelectedBook({ ...book, isLocked: true });
     }
   };
 
