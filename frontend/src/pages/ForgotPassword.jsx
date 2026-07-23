@@ -32,6 +32,12 @@ export default function ForgotPassword() {
       } else {
         setMessage(data.message || 'A password reset link has been sent to your email.');
       }
+
+      if (data.nextStep === 'check-email') {
+        setSent(true);
+        return;
+      }
+
       setSent(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send reset link. Please try again.');

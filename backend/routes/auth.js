@@ -67,6 +67,34 @@ const generateToken = (user) => {
   });
 };
 
+const buildUserPayload = (user, extra = {}) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  isVerified: user.isVerified,
+  notificationsEnabled: user.notificationsEnabled,
+  ...extra,
+});
+
+const buildAuthSuccessResponse = (user, message = 'Authentication successful!', extra = {}) => {
+  const { user: userExtra = {}, ...responseExtra } = extra;
+
+  return {
+    nextStep: 'dashboard',
+    message,
+    token: generateToken(user),
+    user: buildUserPayload(user, userExtra),
+    ...responseExtra,
+  };
+};
+
+const buildVerificationResponse = (message, extra = {}) => ({
+  nextStep: 'verify-email',
+  message,
+  ...extra,
+});
+
 // =====================================================
 // STEP 1: Initiate email verification (before account creation)
 // =====================================================
@@ -77,18 +105,7 @@ router.post(
   async (req, res) => {
     try {
       const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
-      const { email } = req.body;
-      const normalizedEmail = email.toLowerCase().trim();
-
-      // Check if email is already registered and verified
-      const existingUser = await User.findOne({ email: normalizedEmail });
-      if (existingUser && existingUser.isVerified) {
-        return res.status(400).json({ message: 'This email is already registered. Please sign in instead.' });
-      }
+        return res.status(201).json(buildAuthSuccessResponse(existingUser, 'Account created and verified successfully!'));
 
       // Run the full email validation pipeline
       const validation = await validateEmail(normalizedEmail);
@@ -122,22 +139,24 @@ router.post(
       if (result && !result.sent) {
         console.log('\n📧 Verification link (not sent — email unavailable):');
         console.log(`   ${verificationLink}\n`);
-        return res.json({
-          devMode: true,
-          rawToken,
-          verificationLink,
-          message: 'Email service unavailable. A verification link is available below for manual use.',
-          warnings: validation.warnings,
-          suggestion: validation.suggestion,
-        });
+        return res.json(
+          buildVerificationResponse('Email service unavailable. A verification link is available below for manual use.', {
+            devMode: true,
+            rawToken,
+            verificationLink,
+            warnings: validation.warnings,
+            suggestion: validation.suggestion,
+          })
+        );
       }
 
-      res.json({
-        message: 'A verification link has been sent to your email. Please check your inbox and click the link to continue.',
-        email: normalizedEmail,
-        warnings: validation.warnings,
-        suggestion: validation.suggestion,
-      });
+      res.json(
+        buildVerificationResponse('A verification link has been sent to your email. Please check your inbox and click the link to continue.', {
+          email: normalizedEmail,
+          warnings: validation.warnings,
+          suggestion: validation.suggestion,
+        })
+      );
     } catch (error) {
       console.error('Initiate verification error:', error);
       res.status(500).json({ message: 'Unable to send verification email. Please try again later.' });
@@ -174,6 +193,7 @@ router.post(
 
       res.json({
         verified: true,
+        nextStep: 'complete-signup',
         email: pending.email,
         message: 'Email verified! Now please complete your account setup.',
       });
@@ -266,18 +286,7 @@ router.post(
 
       const token = generateToken(user);
 
-      res.status(201).json({
-        token,
-        message: 'Account created and verified successfully!',
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          isVerified: user.isVerified,
-          notificationsEnabled: user.notificationsEnabled,
-        },
-      });
+      res.status(201).json(buildAuthSuccessResponse(user, 'Account created and verified successfully!'));
     } catch (error) {
       console.error('Complete signup error:', error);
       res.status(500).json({ message: 'Unable to complete signup. Please try again later.' });
@@ -331,19 +340,22 @@ router.post(
         const result = await sendAuthLink(email, existingUser.name, verificationLink, 'verify');
 
         if (result && !result.sent) {
-          return res.json({
-            devMode: true,
-            rawToken,
-            verificationLink,
-            message: 'A verification link is available below.',
-          });
+          return res.json(
+            buildVerificationResponse('A verification link is available below.', {
+              devMode: true,
+              rawToken,
+              verificationLink,
+              email: normalizedEmail,
+            })
+          );
         }
 
-        return res.json({
-          requiresVerification: true,
-          message: 'A verification link has been sent to your email.',
-          email: normalizedEmail,
-        });
+        return res.json(
+          buildVerificationResponse('A verification link has been sent to your email.', {
+            requiresVerification: true,
+            email: normalizedEmail,
+          })
+        );
       }
 
       const user = await User.create({ name, email: normalizedEmail, password, notificationsEnabled });
@@ -354,19 +366,22 @@ router.post(
       const result = await sendAuthLink(normalizedEmail, name, verificationLink, 'verify');
 
       if (result && !result.sent) {
-        return res.json({
-          devMode: true,
-          rawToken,
-          verificationLink,
-          message: 'A verification link is available below.',
-        });
+        return res.json(
+          buildVerificationResponse('A verification link is available below.', {
+            devMode: true,
+            rawToken,
+            verificationLink,
+            email: normalizedEmail,
+          })
+        );
       }
 
-      res.status(201).json({
-        requiresVerification: true,
-        message: 'Account created! Please check your email for a verification link.',
-        email: normalizedEmail,
-      });
+      res.status(201).json(
+        buildVerificationResponse('Account created! Please check your email for a verification link.', {
+          requiresVerification: true,
+          email: normalizedEmail,
+        })
+      );
     } catch (error) {
       console.error('Signup error:', error);
       res.status(500).json({ message: 'Unable to complete signup. Please try again later.' });
@@ -571,19 +586,22 @@ router.post(
         const result = await sendAuthLink(email, user.name, verificationLink, 'verify');
 
         if (result && !result.sent) {
-          return res.json({
-            devMode: true,
-            rawToken,
-            verificationLink,
-            message: 'A verification link is available below.',
-          });
+          return res.json(
+            buildVerificationResponse('A verification link is available below.', {
+              devMode: true,
+              rawToken,
+              verificationLink,
+              email: user.email,
+            })
+          );
         }
 
-        return res.json({
-          requiresVerification: true,
-          message: 'Please verify your email before logging in. A new verification link has been sent.',
-          email: user.email,
-        });
+        return res.json(
+          buildVerificationResponse('Please verify your email before logging in. A new verification link has been sent.', {
+            requiresVerification: true,
+            email: user.email,
+          })
+        );
       }
 
       // Record last login
@@ -592,18 +610,11 @@ router.post(
 
       const token = generateToken(user);
 
-      res.json({
-        token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          isVerified: user.isVerified,
-          notificationsEnabled: user.notificationsEnabled,
-          lastLogin: user.lastLogin,
-        },
-      });
+      res.json(
+        buildAuthSuccessResponse(user, 'Login successful!', {
+          user: { lastLogin: user.lastLogin },
+        })
+      );
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Unable to log in. Please try again later.' });
@@ -665,6 +676,7 @@ router.post(
 
       if (result && !result.sent) {
         return res.json({
+          nextStep: 'check-email',
           devMode: true,
           rawToken,
           verificationLink: resetLink,
@@ -673,6 +685,7 @@ router.post(
       }
 
       res.json({
+        nextStep: 'check-email',
         message: 'A password reset link has been sent to your email.',
         email: normalizedEmail,
       });
@@ -721,7 +734,10 @@ router.post(
       user.resetPasswordTokenExpires = undefined;
       await user.save();
 
-      res.json({ message: 'Password reset successfully! You can now log in with your new password.' });
+      res.json({
+        nextStep: 'login',
+        message: 'Password reset successfully! You can now log in with your new password.',
+      });
     } catch (error) {
       console.error('Reset password error:', error);
       res.status(500).json({ message: 'Unable to reset password. Please try again later.' });

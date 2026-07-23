@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import API from '../api/axios';
+import { setAuthSession } from '../api/authSession';
 import PasswordInput from '../components/PasswordInput';
 import SEO from '../components/SEO';
 import { HiCheckCircle, HiMail, HiExclamation } from 'react-icons/hi';
@@ -107,10 +108,10 @@ export default function Signup() {
         notificationsEnabled: formData.notificationsEnabled,
       });
 
-      // Store token and set user
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/dashboard');
+      setAuthSession({ token: data.token, user: data.user });
+      if (data.nextStep === 'dashboard' || !data.nextStep) {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Signup failed. Please try again.');
     } finally {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import API from '../api/axios';
+import { setAuthSession } from '../api/authSession';
 import SEO from '../components/SEO';
 import { HiCheckCircle } from 'react-icons/hi';
 
@@ -27,7 +28,7 @@ export default function VerifyEmail() {
           const { data } = await API.post('/auth/verify-pending', { token: tokenFromUrl });
           if (data.verified) {
             setStatus('success');
-            setMessage('Email verified! Redirecting to complete your account setup...');
+            setMessage(data.message || 'Email verified! Redirecting to complete your account setup...');
             // Redirect to signup page with token and email so user can complete registration
             setTimeout(() => {
               navigate(`/signup?token=${encodeURIComponent(tokenFromUrl)}&email=${encodeURIComponent(data.email)}`);
@@ -48,10 +49,9 @@ export default function VerifyEmail() {
         const { data } = await API.post('/auth/verify-email', { token: tokenFromUrl });
 
         if (data.verified && data.token) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
+          setAuthSession({ token: data.token, user: data.user });
           setStatus('success');
-          setMessage('Email verified successfully! Redirecting to dashboard...');
+          setMessage(data.message || 'Email verified successfully! Redirecting to dashboard...');
           setTimeout(() => {
             navigate('/dashboard');
           }, 2000);

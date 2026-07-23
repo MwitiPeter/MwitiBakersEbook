@@ -55,6 +55,9 @@ export default function ResetPassword() {
       });
       setMessage(data.message || 'Password reset successfully!');
       setSuccess(true);
+      if (data.nextStep === 'login') {
+        setMessage(data.message || 'Password reset successfully!');
+      }
       setTimeout(() => {
         navigate('/login');
       }, 2500);
