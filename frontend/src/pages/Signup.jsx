@@ -9,22 +9,51 @@ import { HiCheckCircle, HiMail, HiExclamation } from 'react-icons/hi';
 export default function Signup() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const queryToken = searchParams.get('token') || '';
+  const queryEmail = searchParams.get('email') || '';
+
   // Step 1: Email verification
-  const [email, setEmail] = useState(searchParams.get('email') || '');
-  const [pendingToken, setPendingToken] = useState(searchParams.get('token') || '');
-  const [emailVerified, setEmailVerified] = useState(!!searchParams.get('token'));
-  const [verificationSent, setVerificationSent] = useState(!!searchParams.get('token'));
+  const [email, setEmail] = useState(queryEmail);
+  const [pendingToken, setPendingToken] = useState(queryToken);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [verifyingToken, setVerifyingToken] = useState(!!queryToken);
   const [sendingVerification, setSendingVerification] = useState(false);
   const [warnings, setWarnings] = useState([]);
   const [devVerificationLink, setDevVerificationLink] = useState('');
 
-  // If user arrived via email link (token in URL), clear URL params visually
+  // If user arrived from an email link, validate token before showing account form.
   useEffect(() => {
-    if (searchParams.get('token')) {
-      // Clean up the URL without reloading the page
-      window.history.replaceState({}, '', '/signup');
+    if (!queryToken) {
+      setVerifyingToken(false);
+      return;
     }
-  }, [searchParams]);
+
+    const verifyToken = async () => {
+      try {
+        const { data } = await API.post('/auth/verify-pending', { token: queryToken });
+        if (data.verified) {
+          setEmailVerified(true);
+          setVerificationSent(true);
+          setPendingToken(queryToken);
+          setEmail(data.email || queryEmail);
+          setError('');
+
+          // Clean URL params without reloading and keep email context.
+          const normalizedEmail = encodeURIComponent(data.email || queryEmail || '');
+          window.history.replaceState({}, '', normalizedEmail ? `/signup?email=${normalizedEmail}` : '/signup');
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || 'This verification link is invalid or expired. Please request a new one.');
+        setEmailVerified(false);
+        setVerificationSent(false);
+      } finally {
+        setVerifyingToken(false);
+      }
+    };
+
+    verifyToken();
+  }, [queryToken, queryEmail]);
 
   // Step 2: Account details
   const [formData, setFormData] = useState({
@@ -120,6 +149,25 @@ export default function Signup() {
   };
 
   // --- Render Steps ---
+  if (verifyingToken) {
+    return (
+      <>
+        <SEO
+          title="Verifying Email"
+          description="Verifying your Mwiti Bakers email link."
+          url="https://mwitibakers.com/signup"
+          noindex
+        />
+        <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+          <div className="text-center">
+            <div className="animate-spin h-12 w-12 border-4 border-brand-gold border-t-transparent rounded-full mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-brand-navy mb-2">Verifying your email link...</h2>
+            <p className="text-gray-500">Please wait a moment.</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   // Show verification sent state (waiting for user to click link)
   if (verificationSent && !emailVerified) {

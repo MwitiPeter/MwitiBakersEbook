@@ -16,6 +16,7 @@ export default function VerifyEmail() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [devLink, setDevLink] = useState('');
 
   // Auto-verify when a token is present in the URL (from email link click)
   useEffect(() => {
@@ -133,9 +134,6 @@ export default function VerifyEmail() {
       </>
     );
   }
-
-  // Normal state — user needs to check email (no token in URL)
-  const [devLink, setDevLink] = useState('');
 
   const handleResendLink = async () => {
     if (!email) {

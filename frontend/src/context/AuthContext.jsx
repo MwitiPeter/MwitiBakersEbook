@@ -34,8 +34,8 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const { data } = await API.post('/auth/login', { email, password });
 
-    // If email verification is required, don't store token yet
-    if (data.requiresVerification) {
+    // For verification or non-auth outcomes, do not create a session.
+    if (data.nextStep === 'verify-email' || data.requiresVerification || !data.token || !data.user) {
       return data;
     }
 
@@ -47,8 +47,8 @@ export function AuthProvider({ children }) {
   const signup = async (name, email, password, notificationsEnabled = false) => {
     const { data } = await API.post('/auth/signup', { name, email, password, notificationsEnabled });
 
-    // If verification is required, don't auto-login
-    if (data.requiresVerification) {
+    // For verification or non-auth outcomes, do not create a session.
+    if (data.nextStep === 'verify-email' || data.requiresVerification || !data.token || !data.user) {
       return data;
     }
 

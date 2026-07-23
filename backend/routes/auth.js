@@ -105,7 +105,18 @@ router.post(
   async (req, res) => {
     try {
       const errors = validationResult(req);
-        return res.status(201).json(buildAuthSuccessResponse(existingUser, 'Account created and verified successfully!'));
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { email } = req.body;
+      const normalizedEmail = email.toLowerCase().trim();
+
+      // Check if email is already registered and verified
+      const existingUser = await User.findOne({ email: normalizedEmail });
+      if (existingUser && existingUser.isVerified) {
+        return res.status(400).json({ message: 'This email is already registered. Please sign in instead.' });
+      }
 
       // Run the full email validation pipeline
       const validation = await validateEmail(normalizedEmail);
@@ -131,7 +142,7 @@ router.post(
       const rawToken = pending.generateToken();
       await pending.save();
 
-      const verificationLink = `${FRONTEND_URL}/verify-email?token=${rawToken}&pending=true`;
+      const verificationLink = `${FRONTEND_URL}/signup?token=${rawToken}&email=${encodeURIComponent(normalizedEmail)}`;
       const result = await sendAuthLink(normalizedEmail, 'there', verificationLink, 'verify');
 
       // If email service is unavailable, return a simulated verification link
@@ -260,19 +271,7 @@ router.post(
         existingUser.notificationsEnabled = notificationsEnabled || false;
         await existingUser.save();
 
-        const token = generateToken(existingUser);
-        return res.status(201).json({
-          token,
-          message: 'Account created and verified successfully!',
-          user: {
-            id: existingUser._id,
-            name: existingUser.name,
-            email: existingUser.email,
-            role: existingUser.role,
-            isVerified: existingUser.isVerified,
-            notificationsEnabled: existingUser.notificationsEnabled,
-          },
-        });
+        return res.status(201).json(buildAuthSuccessResponse(existingUser, 'Account created and verified successfully!'));
       }
 
       // Create new verified user
@@ -494,7 +493,7 @@ router.post(
       const rawToken = newPending.generateToken();
       await newPending.save();
 
-      const verificationLink = `${FRONTEND_URL}/verify-email?token=${rawToken}&pending=true`;
+      const verificationLink = `${FRONTEND_URL}/signup?token=${rawToken}&email=${encodeURIComponent(normalizedEmail)}`;
       const result = await sendAuthLink(normalizedEmail, 'there', verificationLink, 'verify');
 
       if (result && !result.sent) {
@@ -650,12 +649,6 @@ router.post(
 
       const { email } = req.body;
       const normalizedEmail = email.toLowerCase().trim();
-
-      // Validate email (MX, disposable, format)
-      const validation = await validateEmail(normalizedEmail);
-      if (!validation.valid) {
-        return res.status(400).json({ message: validation.errors[0] });
-      }
 
       const user = await User.findOne({ email: normalizedEmail });
 
